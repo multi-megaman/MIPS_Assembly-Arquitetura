@@ -9,7 +9,7 @@
 cardapio: .space 1280					    #bytes -> quantidade em bytes reservados para todos os possiveis 20 itens do cardápio
 #Valores extras para o funcionamento do cardapio
 limite_cardapio: .half 20   		                   #int -> indica qual o limite de itens do cardápio
-ponteiro_cardapio: .half 0 		                   #int -> indica quantos itens existem atualmente no cardápio (vai até limite_cardápio - 1) 
+ponteiro_cardapio: .half 0 		                   #int -> Sempre vai estar apontando para a proxima posição livre do cardapio. Quando chega em limite_cardapio, indica que a proxima posição livre está fora do espaço reservado.
 tamanho_codigo_item_cardapio: .byte 2          #int -> indica o tamanho em bytes reservados para o código do cardápio
 tamanho_preco_item_cardapio: .byte 2 	  #int -> indica o tamanho em bytes reservados para o código do cardápio
 tamanho_descricao_item_cardapio: .byte 60 #int -> indica o tamanho em bytes reservados para a descrição do item do cardápio 
@@ -31,68 +31,154 @@ char: .ascii "a"
 
 .text
 main:
+#!!!!!!!!!!!!!! INICIO DA ZONA DE TESTES !!!!!!!!!!!!!!!!!!!!!!!!!
 #---Área de testes para pegar a descrição do usuário, essa parte será substituida com o CLI posterior, mas por agora para se adicionar um item no cardápio, é preciso ler essa string
 la $a0, string_usuario #carrega o endereço de string em $a0 para ser utilizado na leitura (saber onde vai começar a armazenar os caracteres?)
 addi $a1, $0, 60 #carregando o maximo de caracteres para leitura
 addi $v0,$0, 8 # Serviço 8 lê uma string
 syscall
 add $a2, $0, $a0 #armazena o valor lido em $a2 (string do usuario) 
-#---
+#OBS: A descrição dos itens por enquanto é a mesma para todos eles, já que estamos pegando apenas uma única string para isso
 
 #---Valores de teste referentes ao id do item ($a0) e ao preço dele ($a1)
+addi $a0, $0, 1
+addi $a1, $0, 1000
+jal cardapio_add
+jal cardapio_add #Erro: Item já cadastrado
+jal cardapio_add #Erro: Item já cadastrado
+
+addi $a0, $0, 2
+addi $a1, $0, 2000
+jal cardapio_add
+
+addi $a0, $0, 3
+addi $a1, $0, 3000
+jal cardapio_add
+
+addi $a0, $0, 4
+addi $a1, $0, 70
+jal cardapio_add
+
+addi $a0, $0, 5
+addi $a1, $0, 6467
+jal cardapio_add
+
+addi $a0, $0, 10
+addi $a1, $0, 99999
+jal cardapio_add
+
+addi $a0, $0, 9
+addi $a1, $0, 99999
+jal cardapio_add
+
+addi $a0, $0, 7
+addi $a1, $0, 999
+jal cardapio_add
+
+addi $a0, $0, 8
+addi $a1, $0, 99999
+jal cardapio_add
+
+addi $a0, $0, 6
+addi $a1, $0, 6893
+jal cardapio_add
+
+addi $a0, $0, 11
+addi $a1, $0, 67812
+jal cardapio_add
+
 addi $a0, $0, 15
-addi $a1, $0, 5678
-#---
-
-jal cardapio_add
-jal cardapio_add
-jal cardapio_add
-jal cardapio_add
+addi $a1, $0, 28
 jal cardapio_add
 
-jal cardapio_add
-jal cardapio_add
-jal cardapio_add
-jal cardapio_add
+addi $a0, $0, 12
+addi $a1, $0, 1500
 jal cardapio_add
 
-jal cardapio_add
-jal cardapio_add
-jal cardapio_add
-jal cardapio_add
+addi $a0, $0, 13
+addi $a1, $0, 67278
 jal cardapio_add
 
-jal cardapio_add
-jal cardapio_add
-jal cardapio_add
-jal cardapio_add
+addi $a0, $0, 14
+addi $a1, $0, 67176
 jal cardapio_add
 
-jal cardapio_add
-jal cardapio_add
+addi $a0, $0, 16
+addi $a1, $0, 16512
 jal cardapio_add
 
+addi $a0, $0, 17
+addi $a1, $0, 89321
+jal cardapio_add
+
+addi $a0, $0, 18
+addi $a1, $0, 87234
+jal cardapio_add
+
+addi $a0, $0, 19
+addi $a1, $0, 17821
+jal cardapio_add
+
+addi $a0, $0, 20
+addi $a1, $0, 78214
+jal cardapio_add
+
+addi $a0, $0, 26
+addi $a1, $0, 78214
+jal cardapio_add # Erro: Código fora do alcance
+
+addi $a0, $0, 0
+addi $a1, $0, 78214
+jal cardapio_add # Erro: Código fora do alcance
+
+
+#Checando a existencia de um código no cardápio
+addi $a0, $0, 3
+jal checar_existencia_de_codigo #Retorna 1 (código encontrado)
+
+#Encerrar programa
 addi $v0, $0, 10
 syscall
+
 #=====Criar item no cardápio=====
 cardapio_add: #Params ($a0 -> codigo do item  | int        1 byte,
 				     #$a1 ->  preco do item   | int        2 bytes,
 				     #$a2 -> descricao	    | string 64 bytes)
+	#Registradores temporarios utilizados:
 	#$t0 -> limite_cardapio
 	#$t1 -> endereço do ponteiro_cardapio
 	#$t2 -> valor do ponteiro_cardapio
 	#$t3 -> endereço inicial do proximo espaço livre de item de cardápio
 	#$t4 -> total de bytes do item do cardapio
+	#$t5 -> Um faz tudo
+	
+	#==Checando para ver se o codigo do cardapio ja nao foi inserido
+	addi $sp, $sp, -4
+	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
+	jal checar_existencia_de_codigo #recebendo $a0 como entrada (código do item a ser adicionado) para ver se ele já existe.
+	lw $ra, 0($sp)	#Recupenrando o $ra antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
+	
+	bnez $v0, falha_cardapio_codigo_existe #if (checar_existencia_de_codigo != 0) {return erro} 
+	
+	#=============================================
 	lhu $t0, limite_cardapio
 	la $t1, ponteiro_cardapio
 	lhu $t2, ponteiro_cardapio
 	lbu $t4, tamanho_total_item_cardapio
+	
+	#== Checando para ver se o código digitado está entre 1-20
+	bge $a0, 1, checar_limite_superior # Se $a0 >= 1
+	j falha_cardapio_codigo_alcance  # Pula para o final da função
+
+	checar_limite_superior:
+	ble $a0, $t0, dentro_do_limite    # Se $a0 <= limite_cardapio(20) significa que ele está dentro do limite 1-20
+	j falha_cardapio_codigo_alcance  # Pula para o final da função
+	
+	dentro_do_limite:
 	#==Checando para ver se o cardápio já não está cheio		
 	beq $t0, $t2, falha_cardapio_cheio
 
-	#==Checando para ver se o codigo do cardapio ja nao foi inserido
-	#======================TO DO=======================
-	
 	#==Adicionando o item no cardapio
 	la $t3, cardapio 	#Carregando o endereço inicial do cardapio
 	multu $t2,$t4 	#Calculando o offset para se chegar no proximo espaço de memória livre reservado para um item (67 bytes). ponteiro_cardapio * tamanho_total_item_cardapio 
@@ -121,24 +207,82 @@ cardapio_add: #Params ($a0 -> codigo do item  | int        1 byte,
 	j sucesso
 	
 	falha_cardapio_cheio:
+		addi $sp, $sp, -4
+		sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
 		print_string(falha_criacao_item_cardapio_cheio)
+		lw $a0, 0($sp)	#Recupenrando o $a0 antigo
+		addi $sp, $sp, 4 #voltando a pilha pro lugar original
+		
+		addi $v0, $0, 1 #1 significa falha
+		j fim_cardapio_add
+	falha_cardapio_codigo_existe:
+		addi $sp, $sp, -4
+		sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
+		print_string(falha_criacao_item_cardapio_codigo_cadastrado)
+		lw $a0, 0($sp)	#Recupenrando o $a0 antigo
+		addi $sp, $sp, 4 #voltando a pilha pro lugar original
 		addi $v0, $0, 1
+		j fim_cardapio_add
+	falha_cardapio_codigo_alcance:
+		addi $sp, $sp, -4
+		sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
+		print_string(falha_criacao_item_cardapio_codigo_invalido)
+		lw $a0, 0($sp)	#Recupenrando o $a0 antigo
+		addi $sp, $sp, 4 #voltando a pilha pro lugar original
+		addi $v0, $0, 1
+		j fim_cardapio_add
 	sucesso:
+		addi $v0, $0, 0
+	fim_cardapio_add:
 jr $ra		#Return ($v0 -> sucesso(0)/fracasso(1) | bool
 
+
+#===== Chegar se um id especifico já está no cardapio ===== 
+checar_existencia_de_codigo: #Params($a0 -> codigo do item | int)
+	#Registradores temporarios utilizados:
+	#$t3 -> Código do atual item sendo lido
+	#$t4 -> contador de itens de cardapio ja percorridos
+	#$t5 -> ponteiro_cardapio
+	#$t6 -> registrador que vai percorrer de código em código
+	#$t7 -> tamanho total de um item no cardápio (utilizado para fazer os devidos offsets)
+	addi $t4, $0, 0
+	lb $t5, ponteiro_cardapio
+	la $t6, cardapio 
+	lb $t7, tamanho_total_item_cardapio
+	
+	beq $t5, $0, nao_existe #if (ponteiro_cardapio == 0) {return 0}
+	loop_checagem:
+		beq $t4, $t5, nao_existe #if (contador_itens == qnt_itens) {return 0}  Isso significa que, se tivermos percorrido todos os itens e não achamos um código igual, retornamos zero
+		lh $t3, ($t6) #Como $t6 sempre vai estar apontando para o primeiro byte do item do cardápio, $t6 sempre vai estar apontando para o código daquele item
+		beq $a0, $t3, existe	#if (codigo_atual == codigo_parametro) {return 1}
+		addi $t4, $t4, 1	#adiciona mais um ao contador de itens do cardapio
+		add, $t6, $t6, $t7 #adicionando o offset a $t6 para que ele vá para o proximo código do proximo item
+		j loop_checagem
+	nao_existe:
+		addi $v0, $0, 0
+		addi $v1, $0, -1
+		j fim_checar_existencia_de_codigo 
+	existe:
+		addi $v0, $0, 1
+		add $v1, $0, $t4 #salvando o valor do contador em $v1, assim $v1 vai retornar a posição onde esse item foi encontrado
+	fim_checar_existencia_de_codigo:
+jr $ra # Return($v0 -> 1 se o código já existe e 0 caso ele não exista | bool
+			#$v1 -> Posição no cardápio onde esse item foi encontrado | int)
+
+#===== Copiar String ===== 
 strcpy:	#função que copia uma string
 	move $t0, $a3 #tirando os endereços das registradores de parametro e colocando em registradores temporarios
 	move $t1, $a2
 	move $v0, $t0 #salvando o endereço destino para retornar no final da função
 	loop:
 		lb $t2, ($t1) #carrega 1 bit da memoria em $t2 da string origem
-		beqz $t2, exit #compara $t2 com zero para saber se ja chegou ao fim da string
+		beqz $t2, exit_strcpy #compara $t2 com zero para saber se ja chegou ao fim da string
 		sb $t2, ($t0) #guarda na memoria destino o bit em $t2
 		addi $t0, $t0, 1 #incrementa o endereço de memoria
 		addi $t1, $t1, 1
 		j loop
-	exit:
-		sb $zero, 1($t0) #adiciona o zero ao final da string
+	exit_strcpy:
+		#sb $zero, 1($t0) #adiciona o zero ao final da string
 		jr $ra
 
 #=====Acessar um item do cardápio=====
