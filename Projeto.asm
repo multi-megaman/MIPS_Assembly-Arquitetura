@@ -49,7 +49,29 @@ jal cardapio_add
 jal cardapio_add
 jal cardapio_add
 jal cardapio_add
+
 jal cardapio_add
+jal cardapio_add
+jal cardapio_add
+jal cardapio_add
+jal cardapio_add
+
+jal cardapio_add
+jal cardapio_add
+jal cardapio_add
+jal cardapio_add
+jal cardapio_add
+
+jal cardapio_add
+jal cardapio_add
+jal cardapio_add
+jal cardapio_add
+jal cardapio_add
+
+jal cardapio_add
+jal cardapio_add
+jal cardapio_add
+
 addi $v0, $0, 10
 syscall
 #=====Criar item no cardápio=====
@@ -66,7 +88,7 @@ cardapio_add: #Params ($a0 -> codigo do item  | int        1 byte,
 	lhu $t2, ponteiro_cardapio
 	lbu $t4, tamanho_total_item_cardapio
 	#==Checando para ver se o cardápio já não está cheio		
-	beq $t0, $t1, falha_cardapio_cheio
+	beq $t0, $t2, falha_cardapio_cheio
 
 	#==Checando para ver se o codigo do cardapio ja nao foi inserido
 	#======================TO DO=======================
@@ -86,7 +108,7 @@ cardapio_add: #Params ($a0 -> codigo do item  | int        1 byte,
 	add $t3, $t3, $t5  #soma o valor atual do offset com o valor reservado de bytes para o preço do cardápio, fazendo com que $t3 fique apontando para o espaço vazio reservado a descrição do item
 	
 	addi $t2, $t2, 1	#Acrescenta 1 ao ponteiro_cardapio
-	sh $t2, 0($t1) 		#armazena o valor ponteiro_cardapio + 1 no endereço do ponteiro_cardapio
+	sh $t2, 0($t1) 	#armazena o valor ponteiro_cardapio + 1 no endereço do ponteiro_cardapio
 	
 	add $a3, $0, $t3   #Carregando o endereço destino da cópia de string para $a3
 	#a2 já possui o valor da string que queremos copiar para $a3
