@@ -289,5 +289,35 @@ strcpy:	#função que copia uma string
 #acessar_item_cardapio: #Params ($a0 -> numero referente ao codigo do item  | int )
 
 #jr $ra
+
+
+#======================Parse da String=================
+
+
+
+parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a2, $a3) e pula diretamente para a função informada na String
+		  #ao fim
+	#codigo dos char: (- = 45) ( _ = 95) (a = 97) (c = 99) (f = 102) (l = 108) (r = 114) 
+	add $t0, $0, $a0 #movendo o endereço base da String para $t0
+	add $t1, $0, $0 #registrador auxiliar que indica qual argumento foi encontrado
+	parse_string_loop:
+		lb $t2, 0($t0) #carregando o byte atual
+		beq $t2, 0, parse_string_fim #verifica se a String chegou ao final
+		beq $t2, 45, parse_string_achou #verifica se chegou ao primeiro argumento
+		addi $t0, $t0, 1 #somando 1 ao endereço base
+		j parse_string_loop #reinicia o loop
 	
+	parse_string_achou:
+		addi $t0, $t0, 1
+		beq $t1, 0, parse_string_achou0
+		beq $t1, 1, parse_string_achou1
+		beq $t1, 2, parse_string_achou2
+		
+		parse_string_achou0:
+		add $a0, $t0, $0
+		parse_string_achou1:
+		parse_string_achou2:
+
+	parse_string_fim:
+		#codigo que vai direcionar para onde o programa vai :)
 	
