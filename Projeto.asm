@@ -125,9 +125,10 @@ addi $a0, $0, 19
 addi $a1, $0, 17821
 jal cardapio_ad
 
-#addi $a0, $0, 20
-#addi $a1, $0, 78214
-#jal cardapio_ad
+#comentar  para testar o cardapio_rm 20
+addi $a0, $0, 20
+addi $a1, $0, 78214
+jal cardapio_ad
 
 addi $a0, $0, 26
 addi $a1, $0, 78214
@@ -141,10 +142,19 @@ jal cardapio_ad # Erro: Código inválido
 addi $a0, $0, 21
 jal cardapio_rm #Erro: código inválido
 
-addi $a0, $0, 20
-jal cardapio_rm #Erro: código não cadastrado
+#addi $a0, $0, 20
+#jal cardapio_rm #Erro: código não cadastrado
 
-addi $a0, $0, 4
+addi $a0, $0, 20 #testando a remoção do ultimo item
+jal cardapio_rm #Sucesso
+
+addi $a0, $0, 19 #testando a remoção do ultimo item (mas não no limite)
+jal cardapio_rm #Sucesso
+
+addi $a0, $0, 4 #testando a remoção de um item aleatorio
+jal cardapio_rm #Sucesso
+
+addi $a0, $0, 1 #testando a remoção do primeiro item
 jal cardapio_rm #Sucesso
 
 #Checando a existencia de um código no cardápio
@@ -251,6 +261,7 @@ cardapio_ad: #Params ($a0 -> codigo do item  | int          2 bytes,
 	fim_cardapio_ad:
 jr $ra		#Return ($v0 -> sucesso(0)/fracasso(1) | bool)
 
+
 #===== Deletar item do cardápio =====
 cardapio_rm:  #Params ($a0 -> codigo do item  | int  2 byts)
 
@@ -270,13 +281,12 @@ cardapio_rm:  #Params ($a0 -> codigo do item  | int  2 byts)
 	addi $sp, $sp, 4 #voltando a pilha pro lugar original
 	beqz $v0, falha_cardapio_rm_codigo_inexistente #Se o retorno de checar_existencia_de_codigo for 0, significa que o código inserido não existe
 	
-	#== Caso o código seja válido e ele exista, vamos "Deletar a entrada" movendo todos os bytes a direita desse item do cardápio para a esquerda
+	#== Caso o código seja válido e exista, vamos "Deletar a entrada" movendo todos os bytes a direita desse item do cardápio para a esquerda. Caso seja o ultimo item, apenas zeramos sua entrada
 	addi $sp, $sp, -16
 	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
 	sw $a0, 4($sp)#Salvando o valor de $a0
 	sw $a1, 8 ($sp)#Salvando o valor de $a1
 	sw $a2, 12($sp)#Salvando o valor de $a2
-	#=========
 	la $t4, cardapio
 	lbu $t0, tamanho_total_item_cardapio #Carregando o tamanho total de um item no cardapio
 	multu $v1, $t0 # Calculando o offset necessário para ir diretamente para a primeira posição do item que será "deletado"
@@ -291,13 +301,16 @@ cardapio_rm:  #Params ($a0 -> codigo do item  | int  2 byts)
 	lw $a2, 12($sp)#Carregando de volta $a2 
 	lw $a1, 8($sp)#Carregando de volta $a1
 	lw $a0, 4($sp)#Carregando de volta $a0
-	lw $ra, 0($sp)#Carregando de volta $a2 
+	lw $ra, 0($sp)#Carregando de volta $ra 
 	addi $sp, $sp, 16 
 	
+	#atualizando o ponteiro
 	lhu $t2,  ponteiro_cardapio
 	la $t1, ponteiro_cardapio
 	subiu $t2, $t2, 1	#Subtrai 1 ao ponteiro_cardapio
 	sh $t2, 0($t1) 	#armazena o valor ponteiro_cardapio - 1 no endereço do ponteiro_cardapio
+	
+	addi $v0, $0, 0 	#sucesso
 	
 j fim_cardapio_rm
 falha_cardapio_rm_codigo_inexistente:
@@ -366,7 +379,9 @@ shift_mem_left: #Params ($a0 -> local inicial do conjunto de bytes que vai ser c
 add  $t0, $0, $a0 # começa no valor inicial de copia
 add $t1, $0, $a2 # começa nop valor inicial do destino
 lb $t2, 0($t0)
-#Adicionar um caso onde $a1 (fim do conjunto de bytes que vai ser copiado) é igual a $a2 (para onde os bytes vão ser copiados) isso se encaixa no caso onde queremos remover o ultimo item da lista, logo, esse código não funcionaria atualmente sem isso
+#no nosso caso, se $a0 (restante do cardapio) for igual a $a1 (final do cardapio) significa que estamo removendo o ultimo elemento, e, se isso for verdade, faremos uma abordagem diferente
+beq $a0, $a1, shift_mem_left_caso_ultimo_elemento
+
 loop_shift_mem_left:
 	beq $t0, $a1, fim_shift_mem_left
 	sb $t2, 0($t1) #copiando o byte para o destino a esquerda
@@ -375,6 +390,14 @@ loop_shift_mem_left:
 	addi $t1, $t1, 1 #indo para o próximo endereço de memória
 	lb $t2, 0($t0) #carregando o proximo byte
 	j loop_shift_mem_left
+	
+shift_mem_left_caso_ultimo_elemento:
+	loop_shift_mem_left_ultimo_elemento:
+		beq $t1,  $a1, fim_shift_mem_left #caso tenhamos chegado no final ($a1) encerramos
+		#enquanto não encerramos, percorremos byte a byte, transformando todos os bytes em 0
+		sb $0, 0($t1) #zeramos o byte
+		addi $t1, $t1, 1 #passamos para o proximo
+	j loop_shift_mem_left_ultimo_elemento
 fim_shift_mem_left:
 jr $ra		   #Return (None)
 
@@ -398,35 +421,5 @@ strcpy:	#função que copia uma string
 #acessar_item_cardapio: #Params ($a0 -> numero referente ao codigo do item  | int )
 
 #jr $ra
-
-
-#======================Parse da String=================
-
-
-
-parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a2, $a3) e pula diretamente para a função informada na String
-		  #ao fim
-	#codigo dos char: (- = 45) ( _ = 95) (a = 97) (c = 99) (f = 102) (l = 108) (r = 114) 
-	add $t0, $0, $a0 #movendo o endereço base da String para $t0
-	add $t1, $0, $0 #registrador auxiliar que indica qual argumento foi encontrado
-	parse_string_loop:
-		lb $t2, 0($t0) #carregando o byte atual
-		beq $t2, 0, parse_string_fim #verifica se a String chegou ao final
-		beq $t2, 45, parse_string_achou #verifica se chegou ao primeiro argumento
-		addi $t0, $t0, 1 #somando 1 ao endereço base
-		j parse_string_loop #reinicia o loop
 	
-	parse_string_achou:
-		addi $t0, $t0, 1
-		beq $t1, 0, parse_string_achou0
-		beq $t1, 1, parse_string_achou1
-		beq $t1, 2, parse_string_achou2
-		
-		parse_string_achou0:
-		add $a0, $t0, $0
-		parse_string_achou1:
-		parse_string_achou2:
-
-	parse_string_fim:
-		#codigo que vai direcionar para onde o programa vai :)
 	
