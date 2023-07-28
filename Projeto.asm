@@ -33,12 +33,17 @@ falha_remover_item_cardapio_codigo_invalido: .asciiz "Falha: codigo de item inva
 
 #testes
 string_usuario: .space 60
+input_string_usuario: .asciiz"Digite um comentário para o item por favor: "
 char: .ascii "a"
 
 .text
 main:
 #!!!!!!!!!!!!!! INICIO DA ZONA DE TESTES !!!!!!!!!!!!!!!!!!!!!!!!!
 #---Área de testes para pegar a descrição do usuário, essa parte será substituida com o CLI posterior, mas por agora para se adicionar um item no cardápio, é preciso ler essa string
+addi $v0, $0, 4 #Printar String
+la $a0, input_string_usuario
+syscall
+
 la $a0, string_usuario #carrega o endereço de string em $a0 para ser utilizado na leitura (saber onde vai começar a armazenar os caracteres?)
 addi $a1, $0, 60 #carregando o maximo de caracteres para leitura
 addi $v0,$0, 8 # Serviço 8 lê uma string
@@ -157,8 +162,30 @@ jal cardapio_rm #Sucesso
 addi $a0, $0, 1 #testando a remoção do primeiro item
 jal cardapio_rm #Sucesso
 
+#Adicionando um item após uma deleção
+addi $a0, $0, 19 #testando a adição de um item após uma remoção
+addi $a1, $0, 12394
+jal cardapio_ad #Sucesso
+
+addi $a0, $0, 20 #testando a adição de um item após uma remoção
+addi $a1, $0, 11111
+jal cardapio_ad #Sucesso
+
+addi $a0, $0, 4 #testando a adição de um item após uma remoção
+addi $a1, $0, 74848
+jal cardapio_ad #Sucesso
+
+addi $a0, $0, 4 #testando a adição de um item após uma remoção
+addi $a1, $0, 73748
+jal cardapio_ad #Erro: Item já cadastrado
+
+addi $a0, $0, 1 #testando a adição de um item após uma remoção
+addi $a1, $0, 68356
+jal cardapio_ad #Sucesso
+
 #Checando a existencia de um código no cardápio
 addi $a0, $0, 3
+addi $a1, $0, 1600
 jal checar_existencia_de_codigo #Retorna 1 (código encontrado)
 
 #Encerrar programa
