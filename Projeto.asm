@@ -59,11 +59,17 @@ string_descricao_do_item: .asciiz"Descricao do item: "
 string_usuario: .space 60
 input_string_usuario: .asciiz"Digite um comentário para o item por favor: "
 
-string_teste_parse: .asciiz "mesa_iniciar-09-08198765432-Jose Silva" #vai servir para testar o parse da string
+string_teste_parse: .asciiz "cardapio_ad-15-00490-coca cola" #vai servir para testar o parse da string
 
 .text
 main:
-j parse_string_testes #vai pular diretamente para a area do parse da String
+#j parse_string_testes #vai pular diretamente para a area do parse da String
+la $a0, string_teste_parse
+jal parse_string
+
+j parse_string_end
+
+
 
 #!!!!!!!!!!!!!! INICIO DA ZONA DE TESTES !!!!!!!!!!!!!!!!!!!!!!!!!
 #---Área de testes para pegar a descrição do usuário, essa parte será substituida com o CLI posterior, mas por agora para se adicionar um item no cardápio, é preciso ler essa string
@@ -528,13 +534,10 @@ jr $ra #Return (None)
 #jr $ra
 
 #======================Parse da String=================
-parse_string_testes:
-	la $a0, string_teste_parse
-
-
 parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a2, $a3) e pula diretamente para a função informada na String
-	#codigo dos char: (- = 45) ( _ = 95) (a = 97) (c = 99) (f = 102) (l = 108) (r = 114) 
+	#codigo dos char: (- = 45) ( _ = 95) (a = 97) (c = 99) (f = 102) (l = 108) (m = 109) (r = 114)
 	add $t0, $0, $a0 #movendo o endereço base da String para $t0
+	add $t9, $0, $a0 #salvando o endereço inicial da String em $t9 para ser usado depois da separação da String
 	add $t1, $0, $0 #registrador auxiliar que indica qual argumento foi encontrado
 	parse_string_loop:
 		lb $t2, 0($t0) #carregando o byte atual
@@ -567,17 +570,33 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 			add $a2, $t0, $0 #salvando o terceiro argumento
 			j parse_string_loop #volta pro loop
 
-	parse_string_fim:
-		#codigo que vai direcionar para onde o programa vai :)
-		#por enquanto vai servir pra testes
-		li $v0, 4
-		syscall
-		print_string line_breaker
-		move $a0, $a1
-		syscall
-		print_string line_breaker
-		move $a0, $a2
-		syscall
+	parse_string_fim: #codigo que vai direcionar para onde o programa vai :)
+		add $t0, $0, $t9 #movendo o endereço base da String de $t9 para #t0
+		lb $t1, 0($t0) #carregando o primeiro char da String
+		beq $t1, 99, parse_string_cardapio #compara o char com "c" para saber se é um comando de cardapio
+		beq $t1, 109, parse_string_mesa #compara o char com "m" para saber se é um comando de mesa
+		j parse_string_arquivo #como só sobrou comandos de arquivo pula diretamente
+		
+		parse_string_cardapio:
+			addi $t0, $t0, 9 #somando 9 ao endereço pois vai direto para o char depois do "_"
+			lb $t1, 0($t0)
+			beq $t1, 97, parse_string_cardapio_ad #comparando com "a"
+			beq $t1, 114, parse_string_cardapio_rm #comparando com "r"
+			beq $t1, 108, parse_string_cardapio_list #comparando com "l"
+			
+			parse_string_cardapio_ad:
+				j cardapio_ad 
+			parse_string_cardapio_rm:
+				j cardapio_rm
+			parse_string_cardapio_list:
+				j cardapio_list
+			parse_string_cardapio_format:
+			
+		
+		parse_string_mesa:
+		
+		parse_string_arquivo:
+		
 
-	
-	
+
+	parse_string_end:
