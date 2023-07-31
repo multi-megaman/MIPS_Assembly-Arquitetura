@@ -59,8 +59,12 @@ string_descricao_do_item: .asciiz"Descricao do item: "
 string_usuario: .space 60
 input_string_usuario: .asciiz"Digite um comentário para o item por favor: "
 
+string_teste_parse: .asciiz "mesa_iniciar-09-08198765432-Jose Silva" #vai servir para testar o parse da string
+
 .text
 main:
+j parse_string_testes #vai pular diretamente para a area do parse da String
+
 #!!!!!!!!!!!!!! INICIO DA ZONA DE TESTES !!!!!!!!!!!!!!!!!!!!!!!!!
 #---Área de testes para pegar a descrição do usuário, essa parte será substituida com o CLI posterior, mas por agora para se adicionar um item no cardápio, é preciso ler essa string
 addi $v0, $0, 4 #Printar String
@@ -522,5 +526,58 @@ jr $ra #Return (None)
 #acessar_item_cardapio: #Params ($a0 -> numero referente ao codigo do item  | int )
 
 #jr $ra
+
+#======================Parse da String=================
+parse_string_testes:
+	la $a0, string_teste_parse
+
+
+parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a2, $a3) e pula diretamente para a função informada na String
+	#codigo dos char: (- = 45) ( _ = 95) (a = 97) (c = 99) (f = 102) (l = 108) (r = 114) 
+	add $t0, $0, $a0 #movendo o endereço base da String para $t0
+	add $t1, $0, $0 #registrador auxiliar que indica qual argumento foi encontrado
+	parse_string_loop:
+		lb $t2, 0($t0) #carregando o byte atual
+		beq $t2, 0, parse_string_fim #verifica se a String chegou ao final
+		beq $t2, 45, parse_string_achou #verifica se chegou ao primeiro argumento esta comparando o valor carregado com "-"
+		addi $t0, $t0, 1 #somando 1 ao endereço base
+		j parse_string_loop #reinicia o loop
+	
+	parse_string_achou:
+		beq $t1, 0, parse_string_achou0 #vai para a area onde será salvo o primeiro argumento
+		beq $t1, 1, parse_string_achou1 #vai para a area onde será salvo o segundo argumento
+		beq $t1, 2, parse_string_achou2 #vai para a area onde será salvo o terceiro argumento
+		
+		parse_string_achou0:
+			addi $t0, $t0, 1 #adiciona 1 ao endereço atual para pegar o primeiro elemento da String e não o simbolo "-"
+			add $a0, $t0, $0 #salvando o endereço base do primeiro arguemento
+			addi $t1, $t1, 1 #somando 1 ao contador de argumento
+			j parse_string_loop #volta pro loop
+			
+		parse_string_achou1:
+			sb $0, 0($t0) #colocando \0 no final do argumento anterior
+			addi $t0, $t0, 1 #adiciona 1 ao endereço atual para pegar o primeiro elemento da String e não o simbolo "-"
+			add $a1, $t0, $0 #salvando o segundo argumento
+			addi $t1, $t1, 1 #somando 1 ao contador de argumento
+			j parse_string_loop #volta pro loop
+			
+		parse_string_achou2:
+			sb $0, 0($t0) #colocando \0 no final do argumento anterior
+			addi $t0, $t0, 1 #adiciona 1 ao endereço atual para pegar o primeiro elemento da String e não o simbolo "-"
+			add $a2, $t0, $0 #salvando o terceiro argumento
+			j parse_string_loop #volta pro loop
+
+	parse_string_fim:
+		#codigo que vai direcionar para onde o programa vai :)
+		#por enquanto vai servir pra testes
+		li $v0, 4
+		syscall
+		print_string line_breaker
+		move $a0, $a1
+		syscall
+		print_string line_breaker
+		move $a0, $a2
+		syscall
+
 	
 	
