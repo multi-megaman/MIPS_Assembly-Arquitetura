@@ -215,6 +215,9 @@ jal checar_existencia_de_codigo #Retorna 1 (código encontrado)
 #Checando o print do cardápio
 jal cardapio_list #Sucesso
 
+#Teste da formatação do cardápio
+#jal cardapio_format
+
 #Encerrar programa
 addi $v0, $0, 10
 syscall
@@ -369,6 +372,87 @@ fim_cardapio_rm:
 jr $ra	       #Return ($v0 -> sucesso (0)/fracasso(1) | bool)
 
 
+#===== Listar todos os itens do cardápio em ordem crescente por código =====
+cardapio_list: #Params (None)
+	#Registradores temporários utilizados:
+	#$t0 -> ponteiro_cardapio
+	#$t1 -> limite_cardapio
+	#$t2 -> vai de 1 em 1 até o limite do cardápio (quantidade de códigos), assim assegurando que a ordem com que os itens serão mostrados será a ordem crescente.
+	#$t3 -> faz tudo 1
+	#$t4 -> faz tudo 2
+	addi $sp, $sp, -8
+	sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
+	sw $ra, 4($sp) #Salvando o valor de $ra já que chamaremos mais uma função dentro dessa mesma função
+	lhu $t0, ponteiro_cardapio
+	lhu $t1, limite_cardapio
+	addi $t2, $0, 1
+	beq $t0, $0, aviso_cardapio_list #Se a lista estiver vazia, retornar apenas o aviso
+	
+	loop_cardapio_list:
+		bgtu $t2, $t1, fim_cardapio_list  #se $t2 ultrapassar o limite do cardapio, indica que já esgotamos todos os possiveis prints de itens
+		add $a0, $0, $t2 #copiando o atual valor de $t2 para servir de entrada para a função de checagem
+		jal checar_existencia_de_codigo #Params($a0 -> codigo do item | int)
+		beq $v0, 0, nao_fazer_print_cardapio_list #se a checagem tiver um retorno negativo (0), então não vamos printar do elemento
+		#caso contrário, vamos printar o elemento
+		add $t3, $0, $v1 #armazenando o index do item achado em $t5
+		lbu $t4, tamanho_total_item_cardapio #carrega o tamanho de um item em $t4
+		multu $t3, $t4
+		mflo $t3 #$t3 armazena o offset necessário para se chegar ao item
+		la $t4, cardapio
+		#Printando o código do item
+		add $t4, $t4, $t3 #E com essa soma chegamos exatamente a posição de memória do item do cardápio
+		lhu $t3, 0($t4) #Carregando o valor do código do item
+		 print_string(string_codigo_do_item)
+		 print_int($t3)
+		 print_string(line_breaker)
+		 #Printando o preço do item
+		 lbu $t3, tamanho_codigo_item_cardapio #Carregando o tamanho do código do item
+		 add $t4, $t3, $t4 #Somando o local da memória com o tamanho do código, fazendo com que $t4 esteja agora no preço do item
+		 lhu $t3, 0($t4) #Carregando o valor do preço do item
+		 print_string(string_valor_do_item)
+		 print_int($t3)
+		 print_string(line_breaker)
+		 #Printando a descrição do item
+		 lbu $t3, tamanho_preco_item_cardapio #Carregando o tamanho do preço do item
+		 add $t4, $t3, $t4 #Somando o local da memória com o tamanho do preço, fazendo com que $t4 esteja agora na descrição
+		 print_string(string_descricao_do_item)
+		 #não utilizei o macro já que ele carrega um  endereço dentro ele, e, $t4 já possui um endereço
+		addi $sp, $sp, -4
+		sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
+		addi $v0, $0, 4
+		add $a0, $0, $t4
+		syscall
+		lw $a0, 0($sp)	#Recuperando o $a0 antigo
+		addi $sp, $sp, 4 #voltando a pilha pro lugar original
+		 print_string(line_breaker)
+		 
+		nao_fazer_print_cardapio_list:	
+			addi $t2, $t2, 1 #incrementando o valor de $t2 até chegar no limite do cardápio ($t1)
+			j loop_cardapio_list
+	 aviso_cardapio_list:
+	 	print_string(aviso_listar_cardapio)
+	 	
+	fim_cardapio_list:
+	lw $a0, 0($sp)	#Recuperando o $a0 antigo
+	lw $ra, 4($sp) #Recuperando o $ra original para poder sair dessa função
+	addi $sp, $sp, 8 #voltando a pilha pro lugar original
+
+jr $ra #Return (None)
+
+#===== Remover todos os itens do cardápio =====
+cardapio_format: #Params (None)
+	la $t0, cardapio
+	lw $t1, tamanho_total_cardapio
+	add $t1, $t1, $t0 #Posição final do cardapio
+	add $t2, $0, $t0 #$t2 vai percorrer o cardápido, indo de $t0 (inicio do cardapio) até $t1 (final do cardápio) zerando ele por completo byte a byte
+	loop_cardapio_format:
+		beq $t2, $t1, fim_cardapio_format #Se $t2 for igual a $t1, significa que chegamos no final do cardápio, então podemos encerrar a função
+		sb $0, 0($t2)
+		addi $t2, $t2, 1 #indo para o proximo byte
+		j loop_cardapio_format
+	fim_cardapio_format:
+jr $ra #Return (None)
+
 #===== Chegar se um id especifico já está no cardapio ===== 
 checar_existencia_de_codigo: #Params($a0 -> codigo do item | int)
 	#Registradores temporarios utilizados:
@@ -452,72 +536,6 @@ strcpy:	#função que copia uma string
 jr $ra
 
 
-#===== Listar todos os itens do cardápio em ordem crescente por código =====
-cardapio_list: #Params (None)
-	#Registradores temporários utilizados:
-	#$t0 -> ponteiro_cardapio
-	#$t1 -> limite_cardapio
-	#$t2 -> vai de 1 em 1 até o limite do cardápio (quantidade de códigos), assim assegurando que a ordem com que os itens serão mostrados será a ordem crescente.
-	#$t3 -> faz tudo 1
-	#$t4 -> faz tudo 2
-	addi $sp, $sp, -8
-	sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
-	sw $ra, 4($sp) #Salvando o valor de $ra já que chamaremos mais uma função dentro dessa mesma função
-	lhu $t0, ponteiro_cardapio
-	lhu $t1, limite_cardapio
-	addi $t2, $0, 1
-	beq $t0, $0, aviso_cardapio_list #Se a lista estiver vazia, retornar apenas o aviso
-	
-	loop_cardapio_list:
-		bgtu $t2, $t1, fim_cardapio_list  #se $t2 ultrapassar o limite do cardapio, indica que já esgotamos todos os possiveis prints de itens
-		add $a0, $0, $t2 #copiando o atual valor de $t2 para servir de entrada para a função de checagem
-		jal checar_existencia_de_codigo #Params($a0 -> codigo do item | int)
-		beq $v0, 0, nao_fazer_print_cardapio_list #se a checagem tiver um retorno negativo (0), então não vamos printar do elemento
-		#caso contrário, vamos printar o elemento
-		add $t3, $0, $v1 #armazenando o index do item achado em $t5
-		lbu $t4, tamanho_total_item_cardapio #carrega o tamanho de um item em $t4
-		multu $t3, $t4
-		mflo $t3 #$t3 armazena o offset necessário para se chegar ao item
-		la $t4, cardapio
-		#Printando o código do item
-		add $t4, $t4, $t3 #E com essa soma chegamos exatamente a posição de memória do item do cardápio
-		lhu $t3, 0($t4) #Carregando o valor do código do item
-		 print_string(string_codigo_do_item)
-		 print_int($t3)
-		 print_string(line_breaker)
-		 #Printando o preço do item
-		 lbu $t3, tamanho_codigo_item_cardapio #Carregando o tamanho do código do item
-		 add $t4, $t3, $t4 #Somando o local da memória com o tamanho do código, fazendo com que $t4 esteja agora no preço do item
-		 lhu $t3, 0($t4) #Carregando o valor do preço do item
-		 print_string(string_valor_do_item)
-		 print_int($t3)
-		 print_string(line_breaker)
-		 #Printando a descrição do item
-		 lbu $t3, tamanho_preco_item_cardapio #Carregando o tamanho do preço do item
-		 add $t4, $t3, $t4 #Somando o local da memória com o tamanho do preço, fazendo com que $t4 esteja agora na descrição
-		 print_string(string_descricao_do_item)
-		 #não utilizei o macro já que ele carrega um  endereço dentro ele, e, $t4 já possui um endereço
-		addi $sp, $sp, -4
-		sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
-		addi $v0, $0, 4
-		add $a0, $0, $t4
-		syscall
-		lw $a0, 0($sp)	#Recuperando o $a0 antigo
-		addi $sp, $sp, 4 #voltando a pilha pro lugar original
-		 print_string(line_breaker)
-		 
-		nao_fazer_print_cardapio_list:	
-			addi $t2, $t2, 1 #incrementando o valor de $t2 até chegar no limite do cardápio ($t1)
-			j loop_cardapio_list
-	 aviso_cardapio_list:
-	 	print_string(aviso_listar_cardapio)
-	 	
-	fim_cardapio_list:
-	lw $a0, 0($sp)	#Recuperando o $a0 antigo
-	lw $ra, 4($sp) #Recuperando o $ra original para poder sair dessa função
-	addi $sp, $sp, 8 #voltando a pilha pro lugar original
-
-jr $ra #Return (None)
 #=====Acessar um item do cardápio=====
 #acessar_item_cardapio: #Params ($a0 -> numero referente ao codigo do item  | int )
 
