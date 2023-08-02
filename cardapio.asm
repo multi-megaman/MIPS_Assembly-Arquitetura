@@ -60,7 +60,7 @@ string_descricao_do_item: .asciiz"Descricao do item: "
 
 
 .text
-.globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo
+.globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio
 j end_cardapio
 #=====Criar item no cardápio=====
 cardapio_ad: #Params ($a0 -> codigo do item  | int          2 bytes,
@@ -291,6 +291,8 @@ cardapio_format: #Params (None)
 	fim_cardapio_format:
 jr $ra #Return (None)
 
+#==========Funções extras================================================================================
+
 #===== Chegar se um id especifico já está no cardapio ===== 
 checar_existencia_de_codigo: #Params($a0 -> codigo do item | int)
 	#Registradores temporarios utilizados:
@@ -322,7 +324,33 @@ checar_existencia_de_codigo: #Params($a0 -> codigo do item | int)
 	fim_checar_existencia_de_codigo:
 jr $ra # Return($v0 -> 1 se o código já existe e 0 caso ele não exista | bool
 			#$v1 -> Posição no cardápio onde esse item foi encontrado, caso não tenha sido encontrado, o seu valor será -1 | int)
-
+			
+#=======Retornar o nome de um item do cardápio========
+retornar_infos_item_cardapio: #Params ($a0 -> id do item que o usuário gostaria de ter o nome e o preço)
+	
+	addi $sp, $sp, -4
+	sw $ra, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
+	jal checar_existencia_de_codigo #Verificando se o item existe, e, se existir 
+	lw $ra, 0($sp)	#Recuperando o $a0 antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
+	
+	la $t4, cardapio
+	lbu $t0, tamanho_total_item_cardapio #Carregando o tamanho total de um item no cardapio
+	multu $v1, $t0 # Calculando o offset necessário para ir diretamente para a primeira posição do item que queremos saber a descrição
+	mflo $t1          #offset para se chegar no item desejado
+	add $t2, $t4, $t1 #t2 está apontando exatamente para o local inicial onde o item desejado está 
+	lbu $t3, tamanho_codigo_item_cardapio #Carregando o tamanho do código do item
+	add $t1, $t2, $t3 # $t1 está apontando para o espaço de memória do preço do item
+	lhu $v0, 0($t1) #Carregamos $v0 com o valor que está em $t1 (o preço do item)
+	lbu $t3, tamanho_preco_item_cardapio #Carregando o tamanho do preço do item
+	add $v1, $t1, $t3 #Indo para o primeiro byte da descrição do item
+	j fim_retornar_infos_item_cardapio
+	retornar_infos_item_cardapio_item_nao_encontrado:
+		addi $v0, $0, -1 #Código de falha
+		addi $v1, $0, -1 #Código de falha
+fim_retornar_infos_item_cardapio:
+jr $ra #Return ($v0 -> preço do item, caso o item não exista, $v0 terá o valor de -1 | int .half
+			#$v1 -> Vai apontar exatamente para o inicio da string, caso o item não exista, o seu valor será -1 | address int)
 
 #Deslocar uma quantidade N ($a1 - $a0) de bytes para a esquerda ($a2)
 shift_mem_left: #Params ($a0 -> local inicial do conjunto de bytes que vai ser copiado | memory address,

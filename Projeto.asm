@@ -9,7 +9,19 @@ white_space: .space 24 #Só para o cardápio começar em um lugar mais bonitinho no
 	sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
 	
 	addi $v0, $0, 4
-	la $a0, %string
+	la $a0, (%string)
+	syscall
+	
+	lw $a0, 0($sp)	#Recuperando o $a0 antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
+.end_macro
+
+.macro print_int(%int)
+	addi $sp, $sp, -4
+	sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
+	
+	addi $v0, $0, 1
+	add $a0, $0, %int
 	syscall
 	
 	lw $a0, 0($sp)	#Recuperando o $a0 antigo
@@ -171,6 +183,14 @@ jal checar_existencia_de_codigo #Retorna 1 (código encontrado)
 
 #Checando o print do cardápio
 jal cardapio_list #Sucesso
+
+#Chegando as informações de um item do cardápio
+addi $a0, $0, 3
+jal retornar_infos_item_cardapio	
+add $t0, $v0, $0
+print_int($t0)
+print_string($v1)
+
 
 #Teste da formatação do cardápio
 #jal cardapio_format
