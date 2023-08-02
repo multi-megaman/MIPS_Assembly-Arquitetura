@@ -16,6 +16,16 @@ tamanho_preco_item_cardapio: .byte 2 	  #int -> indica o tamanho em bytes reserv
 tamanho_descricao_item_cardapio: .byte 60 #int -> indica o tamanho em bytes reservados para a descrição do item do cardápio 
 tamanho_total_item_cardapio: .byte 64        #int -> indica o tamanho em bytes reservados para um item do cardápio
 
+#Mesas
+# ===== Bits reservados para cada item da mesa =====
+# codigo da mesa -> 01-15        = 4 bits (2^4 = 16 valores)    arredondando para words = 8 bits    unsigned
+# telefone        -> DDDNNNNNNNN = 11 dígitos                 arredondando para bytes = 11 bytes  ASCII (ou outra codificação)
+# responsavel     -> 0-60        = 60*8 = 480 bits            arredondando para bytes = 480 bits  ASCII (ou outra codificação)
+
+# Bits totais para um item da mesa = 8 + 11*8 + 480 = 488 bits -> 61 bytes
+
+# Espaços totais para as 15 mesas: 61 * 15 = 915 bytes
+mesas: .space 915 #bytes -> quantidade em bytes reservados para os possíveis 15 itens das mesas
 #textos reservados
 falha_criacao_item_cardapio_codigo_cadastrado: .asciiz "Falha: numero de item ja cadastrado\n"
 falha_criacao_item_cardapio_codigo_invalido: .asciiz "Falha: codigo de item invalido\n"
@@ -30,6 +40,9 @@ line_breaker: .asciiz"\n"
 string_codigo_do_item: .asciiz"Codigo do item: "
 string_valor_do_item: .asciiz"Valor do item: "
 string_descricao_do_item: .asciiz"Descricao do item: "
+string_codigo_da_mesa: .asciiz"Codigo da mesa: "
+string_telefone_do_responsavel: .asciiz"Telefone do responsavel da mesa: "
+string_nome_responsavel_da_mesa: .asciiz"Nome do responsavel da mesa: "
 #Macros
 .macro print_string(%string)
 	addi $sp, $sp, -4
@@ -58,9 +71,20 @@ string_descricao_do_item: .asciiz"Descricao do item: "
 #testes
 string_usuario: .space 60
 input_string_usuario: .asciiz"Digite um comentário para o item por favor: "
+telefone_teste_usuario: .asciiz"81992248823"
+nome_teste_usuario: .asciiz"Jacinto Pinto"
 
 .text
 main:
+#inicando uma mesa
+    	# $a0 - Código da mesa (01 a 15)
+    	# $a1 - Telefone do responsável (string com 11 caracteres)
+    	# $a2 - Nome do responsável (string com até 60 caracteres)
+    	addi $a0, $0, 8
+    	la $a1, telefone_teste_usuario
+    	la $a2, nome_teste_usuario
+jal mesa_iniciar
+
 #!!!!!!!!!!!!!! INICIO DA ZONA DE TESTES !!!!!!!!!!!!!!!!!!!!!!!!!
 #---Área de testes para pegar a descrição do usuário, essa parte será substituida com o CLI posterior, mas por agora para se adicionar um item no cardápio, é preciso ler essa string
 addi $v0, $0, 4 #Printar String
@@ -214,6 +238,19 @@ jal checar_existencia_de_codigo #Retorna 1 (código encontrado)
 
 #Checando o print do cardápio
 jal cardapio_list #Sucesso
+
+
+#inicando uma mesa
+    	# $a0 - Código da mesa (01 a 15)
+    	# $a1 - Telefone do responsável (string com 11 caracteres)
+    	# $a2 - Nome do responsável (string com até 60 caracteres)
+    	addi $a0, $0, 1
+    	la $a1, telefone_teste_usuario
+    	la $a2, nome_teste_usuario
+jal mesa_iniciar
+
+addi $a0, $0, 1
+jal print_mesa_data
 
 #Encerrar programa
 addi $v0, $0, 10
@@ -516,7 +553,108 @@ cardapio_list: #Params (None)
 	lw $a0, 0($sp)	#Recuperando o $a0 antigo
 	lw $ra, 4($sp) #Recuperando o $ra original para poder sair dessa função
 	addi $sp, $sp, 8 #voltando a pilha pro lugar original
+         jr $ra
+         
+         
+	mesa_iniciar:
+    	# Exemplo de chamada para iniciar o atendimento em uma mesa (mesa_iniciar):
+    	# Registros de entrada:
+    	# $a0 - Código da mesa (01 a 15)
+    	# $a1 - Telefone do responsável (string com 11 caracteres)
+    	# $a2 - Nome do responsável (string com até 60 caracteres)
+    	# Registros de saída:
+    	# $v0 - Resultado da operação (0 para sucesso, -1 para falha)
 
+    # Valida se o código da mesa é válido (01 a 15)
+    li $t0, 1        # Carrega 1 em $t0 (valor mínimo do código da mesa)
+    li $t1, 15       # Carrega 15 em $t1 (valor máximo do código da mesa)
+    blt $a0, $t0, mesa_inexistente   # Se $a0 < 1, a mesa é inexistente
+    bgt $a0, $t1, mesa_inexistente   # Se $a0 > 15, a mesa é inexistente
+
+    # Calcula o endereço na memória para o item da mesa
+    # Cada item possui 61 bytes, então o endereço é calculado como: endereço_base + (tamanho_do_item * (codigo_da_mesa - 1))
+    li $t2, 61       # Carrega 61 em $t2 (tamanho do item da mesa)
+    sub $t3, $a0, 1  # Subtrai 1 do código da mesa para obter o índice baseado em 0
+    mul $t3, $t3, $t2  # Multiplica o índice pelo tamanho do item para obter o deslocamento
+    la $t4, mesas    # Carrega o endereço base da memória para as mesas em $t4
+    add $t4, $t4, $t3  # Calcula o endereço do item da mesa
+
+    # Verifica se a mesa está ocupada (o primeiro byte do item da mesa é usado para esse propósito)
+    lb $t5, 0($t4)   # Carrega o primeiro byte do item da mesa em $t5
+    bnez $t5, mesa_ocupada   # Se o byte não é zero, a mesa está ocupada
+
+    # Mesa disponível para iniciar o atendimento
+    # Define o estado da mesa como ocupada (define o primeiro byte como 1)
+    li $t5, 1        # Carrega 1 em $t5 (valor para mesa ocupada)
+    sb $t5, 0($t4)   # Armazena o valor em $t5 no primeiro byte do item da mesa
+
+    # Armazena o telefone e o nome do responsável na memória (a partir do segundo byte)
+    move $t6, $a1    # Move o telefone do responsável para $t6
+    move $t7, $a2    # Move o nome do responsável para $t7
+    sw $t6, 4($t4)   # Armazena o telefone no segundo byte do item da mesa
+    sw $t7, 16($t4)  # Armazena o nome do responsável a partir do 12º byte do item da mesa
+
+    # Atendimento iniciado com sucesso
+    li $v0, 0        # Define $v0 como 0 (para sucesso)
+    
+    # Imprime o código da mesa
+   # li $v0, 1           # Código da syscall para imprimir inteiro
+    #move $a0, $t8       # Carrega o código da mesa em $a0
+    #syscall
+   print_string(string_codigo_da_mesa)
+		print_int($t8)
+		 print_string(line_breaker)
+
+print_string(string_telefone_do_responsavel)
+    # Imprime o telefone do responsável
+    li $v0, 4           # Código da syscall para imprimir string
+    move $a0, $t6       # Carrega o telefone do responsável em $a0
+syscall
+    
+    
+print_string(line_breaker)
+print_string(string_nome_responsavel_da_mesa)
+    # Imprime o nome do responsável
+    li $v0, 4           # Código da syscall para imprimir string
+    move $a0, $t7       # Carrega o nome do responsável em $a0
+    syscall
+    
+    jr $ra
+    mesa_inexistente:
+    # Mesa inexistente
+    li $v0, -1       # Define $v0 como -1 (para falha)
+    jr $ra
+    mesa_ocupada:
+    # Mesa ocupada
+    li $v0, -2       # Define $v0 como -2 (para falha)
+    jr $ra
+    
+    # Função para imprimir os dados da mesa
+# Recebe o código da mesa em $a0
+print_mesa_data:
+    # Calcula o endereço base do array de mesas
+    la $t0, mesas
+
+    # Calcula o deslocamento no array de mesas com base no código da mesa
+    sll $t1, $a0, 6    # Cada entrada de mesa ocupa 64 bytes (2^6)
+    add $t0, $t0, $t1  # $t0 = endereço base + deslocamento
+
+    # Imprime o código da mesa
+    li $v0, 1           # Código da syscall para imprimir inteiro
+    lw $a0, 0($t0)      # Carrega o código da mesa em $a0
+    syscall
+
+    # Imprime o telefone do responsável
+    li $v0, 4           # Código da syscall para imprimir string
+    lw $a0, 4($t0)      # Carrega o telefone do responsável em $a0
+    syscall
+
+    # Imprime o nome do responsável
+    li $v0, 4           # Código da syscall para imprimir string
+    lw $a0, 16($t0)      # Carrega o endereço do nome do responsável em $a0
+    syscall
+
+    jr $ra              # Retorna para o chamador
 jr $ra #Return (None)
 #=====Acessar um item do cardápio=====
 #acessar_item_cardapio: #Params ($a0 -> numero referente ao codigo do item  | int )
