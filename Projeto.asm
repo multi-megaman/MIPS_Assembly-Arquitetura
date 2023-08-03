@@ -535,7 +535,7 @@ jr $ra #Return (None)
 
 #======================Parse da String=================
 parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a2, $a3) e pula diretamente para a função informada na String
-	#codigo dos char: (- = 45) ( _ = 95) (a = 97) (c = 99) (f = 102) (l = 108) (m = 109) (r = 114)
+	#codigo dos char: (- = 45) ( _ = 95) (a = 97) (c = 99) (f = 102) (i = 105) (l = 108) (m = 109) (0 = 111) {p = 112} (r = 114)
 	add $t0, $0, $a0 #movendo o endereço base da String para $t0
 	add $t9, $0, $a0 #salvando o endereço inicial da String em $t9 para ser usado depois da separação da String
 	add $t1, $0, $0 #registrador auxiliar que indica qual argumento foi encontrado
@@ -583,6 +583,8 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 			beq $t1, 97, parse_string_cardapio_ad #comparando com "a"
 			beq $t1, 114, parse_string_cardapio_rm #comparando com "r"
 			beq $t1, 108, parse_string_cardapio_list #comparando com "l"
+			beq $t1, 102, parse_string_cardapio_format #comparando com f
+			
 			
 			parse_string_cardapio_ad:
 				j cardapio_ad 
@@ -591,10 +593,42 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 			parse_string_cardapio_list:
 				j cardapio_list
 			parse_string_cardapio_format:
-			
+				#j carapio_format
 		
 		parse_string_mesa:
-		
+			addi $t0, $t0, 5 #pula para o quinto caracter da string sendo o primeiro caracter referente ao comando da mesa
+			lb $t1, 0($t0) #carrega o byte
+			beq $t1, 105, parse_string_mesa_iniciar #compara com "i"
+			beq $t1, 97, parse_string_mesa_ad_item #compara com "a"
+			beq $t1, 114, parse_string_mesa_rm_item #compara com "r"
+			beq $t1, 102, parse_string_mesa_f #compara com "f"
+			beq $t1, 112, parse_string_mesa_p #compara com "p"
+			
+			
+			
+			
+			parse_string_mesa_iniciar:
+				#j mesa_iniciar
+			parse_string_mesa_ad_item:
+				#j mesa_ad_item
+			parse_string_mesa_rm_item:
+				#j mesa_rm_item
+			parse_string_mesa_f:
+				addi $t0, $t0, 1
+				lb $t1, 0($t0)
+				beq $t1, 111, parse_string_mesa_format
+				#j mesa_fechar
+				
+				parse_string_mesa_format:
+					#j mesa_format
+			parse_string_mesa_p:
+				addi $t0, $t0, 2
+				lb $t1, 0($t0)
+				beq $t1, 114, parse_string_mesa_parcial
+				#j mesa_pagar
+				
+				parse_string_mesa_parcial:
+					#j mesa_parcial
 		parse_string_arquivo:
 		
 
