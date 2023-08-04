@@ -21,10 +21,12 @@ parse_string_string_invalida: .asciiz "String invalida"
 
 
 #======================Parse da String=================
-j super_hiper_end
+j super_hiper_end2
 
 parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a2, $a3) e pula diretamente para a função informada na String
-
+	addi $sp, $sp, -4
+	sw $ra, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
+	
 	#codigo dos char: (- = 45) ( _ = 95) (a = 97) (c = 99) (e = 101) (f = 102) (g = 103) (i = 105) (l = 108) (m = 109) (0 = 111) {p = 112} (r = 114) (s = 115)
 	add $t0, $0, $a0 #movendo o endereço base da String para $t0
 	add $t9, $0, $a0 #salvando o endereço inicial da String em $t9 para ser usado depois da separação da String
@@ -83,23 +85,23 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				add $a3, $a1, $0 #colocando $a1 como paramentro para a função abaixo
 				jal converter_string_para_int #converte string para int
 				add $a1, $v0, $0 #movendo o resultado de volta pra $a1
-				j zona_testes_parse_string
-				#j cardapio_ad
+				jal cardapio_ad
+				j super_hiper_end
 				 
 			parse_string_cardapio_rm: #100%
 				add $a3, $a0, $0 #uso da funcao string para int
 				jal converter_string_para_int
 				add $a0, $v0, $0
-				j zona_testes_parse_string
-				#j cardapio_rm
+				jal cardapio_rm
+				j super_hiper_end
 				
 			parse_string_cardapio_list: #100%
-				j zona_testes_parse_string
-				#j cardapio_list
+				jal cardapio_list
+				j super_hiper_end
 				
 			parse_string_cardapio_format: #100%
-				j zona_testes_parse_string
-				#j carapio_format
+				jal cardapio_format
+				j super_hiper_end
 		
 		parse_string_mesa:
 			addi $t0, $t0, 5 #pula para o quinto caracter da string sendo o primeiro caracter referente ao comando da mesa
@@ -128,8 +130,9 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				add $a3, $a1, $0 #uso da funcao string para int
 				jal converter_string_para_int
 				add $a1, $v0, $0
-				j zona_testes_parse_string
-				#j mesa_ad_item
+				jal mesa_ad_item
+				j super_hiper_end
+				
 			parse_string_mesa_rm_item: #100%
 				add $a3, $a0, $0 #uso da funcao string para int
 				jal converter_string_para_int
@@ -137,17 +140,18 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				add $a3, $a1, $0 #uso da funcao string para int
 				jal converter_string_para_int
 				add $a1, $v0, $0
-				j zona_testes_parse_string
-				#j mesa_rm_item
+				jal mesa_rm_item
+				j super_hiper_end
+				
 			parse_string_mesa_f:
 				addi $t0, $t0, 1 #adicionando 1 ao endereço para pegar o proximo char pois é o char mais proximo que diferencia as duas funcoes iniciadas com "f"
 				lb $t1, 0($t0) #carregando o char
 				beq $t1, 111, parse_string_mesa_format #comparando com "o"
 				beq $t1, 101, parse_string_mesa_fechar #comparando com "e"
 				
-				parse_string_mesa_format: #100%
-					j zona_testes_parse_string 
-					#j mesa_format #pula para a função informada
+				parse_string_mesa_format: #100% 
+					jal mesa_format #pula para a função informada
+					j super_hiper_end
 					
 				parse_string_mesa_fechar: #100%
 					add $a3, $a0, $0 #uso da funcao string para int
@@ -223,3 +227,11 @@ converter_string_para_int: #função que vai converter uma string para um inteiro 
 			jr $ra	 #retorna a funão para onde foi chamada
 			
 super_hiper_end:
+lw $ra, 0($sp)	#Recuperando o $ra antigo
+addi $sp, $sp, 4 #voltando a pilha pro lugar original
+jr $ra
+#cardapio 100% pronto
+#mesa ad
+#mesa format
+#mesa rm
+super_hiper_end2:
