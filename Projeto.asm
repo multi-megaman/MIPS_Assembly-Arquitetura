@@ -39,6 +39,7 @@ main:
 	#la $a2, nome_teste_usuario
 #jal mesa_iniciar
 
+
 #!!!!!!!!!!!!!! INICIO DA ZONA DE TESTES !!!!!!!!!!!!!!!!!!!!!!!!!
 #---area de testes para pegar a descricao do usuario, essa parte serah substituida com o CLI posterior, mas por agora para se adicionar um item no cardapio, � preciso ler essa string
 addi $v0, $0, 4 #Printar String
@@ -53,6 +54,7 @@ add $a2, $0, $a0 #armazena o valor lido em $a2 (string do usuario)
 #OBS: A descri��o dos itens por enquanto � a mesma para todos eles, j� que estamos pegando apenas uma �nica string para isso
 
 #---Valores de teste referentes ao id do item ($a0) e ao pre�o dele ($a1)
+
 addi $a0, $0, 1
 addi $a1, $0, 1000
 jal cardapio_ad
@@ -66,6 +68,13 @@ jal cardapio_ad
 addi $a0, $0, 3
 addi $a1, $0, 3000
 jal cardapio_ad
+
+jal mesa_format
+
+addi $a0, $0, 2
+addi $a1, $0, 3
+jal mesa_ad_item
+
 
 addi $a0, $0, 4
 addi $a1, $0, 70
@@ -206,7 +215,6 @@ print_string($v1) #printa a descricao
 
 #Teste das mesas
 
-jal mesa_format
 #Fun��es============================================================================================================================================================
 
 	
