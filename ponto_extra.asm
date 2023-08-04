@@ -34,7 +34,9 @@ white_space_3: .space 14
 .end_macro
 
 .text
-j fim_mmio
+
+.globl print_string_on_MMIO, print_number_on_MMIO
+#j fim_mmio
 	lui	$s0,0xffff	#ffff0000
 	la $s2, USER_COMMAND #$s2 vai ser responsavel por escrever byte a byte em USER_COMMAND
 	lw $s4, tamanho_user_command 
@@ -84,9 +86,8 @@ new_line:
 	sw $t8,12($s0)	#Salvando o "\n" no display
 	print_string(USER_COMMAND)
 	print_string(teste_line_breaker)
-	
-	#TO DO  = Envia a string condita em USER_COMMAND para a funcao do parser
 	la $a0, USER_COMMAND
+	#jal print_on_MMIO #Funciona!
 	jal parse_string
 	#zerar USER_COMMAND
 	la $s2, USER_COMMAND  #$s2 vai ser responsavel por escrever byte a byte em USER_COMMAND
@@ -103,4 +104,30 @@ print_string_on_mmio_display: #Params ($a0 -> endereco de memoria onde a string 
 
 jr $ra #Return (None)
 
+#===== Funcao que imprime no display do MMIO uma determinada string dado seu endereco=====
+print_string_on_MMIO: #Params ($a0 -> endereco da memoria da string | address int)
+	add $t2, $0, $a0 #Copiando o endereco de memoria para $t2
+	lui	$t0,0xffff	#ffff0000
+	wait_to_print_string_on_MMIO:
+		lw	$t1,8($t0)	#control
+		andi	$t1,$t1,0x0001 #verificando se podemos imprimir um caracter na tela 
+		beq	$t1,$0,wait_to_print_string_on_MMIO
+		lb $t3, 0($t2) #carregando o byte que vai ser impresso
+		sw $t3,12($t0)	#data
+		addi $t2, $t2, 1 #indo para o proximo byte
+		beqz $t3, fim_print_string_on_MMIO #se o caracter lido eh 0, entao chegamos no fim da string a ser impressa
+		j wait_to_print_string_on_MMIO
+	fim_print_string_on_MMIO:
+jr $ra #Return (None)
+
+#===== Funcao que imprime no display do MMIO um numero=====
+print_number_on_MMIO: #Params ($a0 -> numero a ser impresso | number)
+	add $t2, $0, $a0 #Copiando o numero para $t2
+	lui	$t0,0xffff	#ffff0000
+	wait_to_print_number_on_MMIO:
+		lw	$t1,8($t0)	#control
+		andi	$t1,$t1,0x0001 #verificando se podemos imprimir um caracter na tela 
+		beq	$t1,$0,wait_to_print_number_on_MMIO
+		sw    $t2,12($t0)	#data
+jr $ra #Return (None)
 fim_mmio:

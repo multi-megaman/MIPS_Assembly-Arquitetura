@@ -3,8 +3,7 @@
 #Macros
 
 string_funcionou_1: .asciiz "deu perfeitamente certo "
-parser_comando_invalido: .asciiz "COMANDO INVALIDO!!!\n"
-parser_string_nota_number: .asciiz "NOT A NUMBER"
+parser_comando_invalido: "COMANDO INVALIDO!!!\n"
 parse_string_string_invalida: .asciiz "String invalida\n"
 .macro print_string(%string)
 	addi $sp, $sp, -4
@@ -95,7 +94,7 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				j super_hiper_end
 				 
 			parse_string_cardapio_rm: #100%
-				blt $t9, 1, parse_string_invalidao
+				beq $t9, 0, parse_string_invalida #verifica se nenhum argumento foi informado
 				add $a3, $a0, $0 #uso da funcao string para int
 				jal converter_string_para_int
 				add $a0, $v0, $0
@@ -124,7 +123,6 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 			
 			
 			parse_string_mesa_iniciar: #100%
-				blt $t9, 1, parse_string_invalida
 				add $a3, $a0, $0 #uso da funcao string para int
 				jal converter_string_para_int
 				add $a0, $v0, $0
@@ -132,7 +130,6 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				#j mesa_iniciar
 				
 			parse_string_mesa_ad_item: #100%
-				blt $t9, 2, parse_string_invalida
 				add $a3, $a0, $0 #uso da funcao string para int
 				jal converter_string_para_int
 				add $a0, $v0, $0
@@ -143,7 +140,6 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				j super_hiper_end
 				
 			parse_string_mesa_rm_item: #100%
-				blt $t9, 2, parse_string_invalida
 				add $a3, $a0, $0 #uso da funcao string para int
 				jal converter_string_para_int
 				add $a0, $v0, $0
@@ -165,7 +161,6 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 					j super_hiper_end
 					
 				parse_string_mesa_fechar: #100%
-					blt $t9, 1, parse_string_invalida
 					add $a3, $a0, $0 #uso da funcao string para int
 					jal converter_string_para_int
 					add $a0, $v0, $0
@@ -180,7 +175,6 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				j parse_string_invalida
 				
 				parse_string_mesa_parcial: #100%
-					blt $t9, 1, parse_string_invalida
 					add $a3, $a0, $0 #uso da funcao string para int
 					jal converter_string_para_int
 					add $a0, $v0, $0
@@ -188,7 +182,6 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 					#j mesa_parcial
 					
 				parse_string_mesa_pagar: #100%
-					blt $t9, 2, parse_string_invalida
 					add $a3, $a0, $0 #uso da funcao string para int
 					jal converter_string_para_int
 					add $a0, $v0, $0
@@ -220,9 +213,6 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 		print_string(parser_comando_invalido)
 		j super_hiper_end
 		
-	parse_string_not_a_number:
-		print_string(parser_string_nota_number)
-		j super_hiper_end
 
 	
 converter_string_para_int: #função que vai converter uma string para um inteiro recebe a String em $a3 e retorna o resultado em $v0
@@ -230,16 +220,12 @@ converter_string_para_int: #função que vai converter uma string para um inteiro 
 	lb $t1, 0($t0) #carregando o primeiro byte do numero
 	#falta verificar se o que foi informado é um numero
 	subi $t1, $t1, 48 #subtraindo 48 pois o 0 e representado pelo numero 48 e os seguintes numeros na ordem
-	blt $t1, 0, parse_string_not_a_number
-	bgt $t1, 9, parse_string_not_a_number
 	
 		converter_string_para_int_loop:
 			addi $t0, $t0, 1 #adiciona 1 ao endereço para pegar o proximo byte
 			lb $t2, 0($t0) #carrega o byte
 			beq $t2, $0, converter_string_para_int_fim #verifica se o byte é 0 - é impossivel confundir com o char "0" pois ele é representado pelo numero 48
 			subi $t2, $t2, 48 #subtrai 48 para converter de char para int
-			blt $t1, 0, parse_string_not_a_number
-			bgt $t1, 9, parse_string_not_a_number
 			mul $t1, $t1, 10 #multiplica o numero ja armazenado por 10 pois sera adicionado mais uma casa a esquerda desse numero apos isso
 			add $t1, $t1, $t2 #adiciona o numero que estava na string ao numero salvo até o momento
 			j converter_string_para_int_loop #reinicia o loop

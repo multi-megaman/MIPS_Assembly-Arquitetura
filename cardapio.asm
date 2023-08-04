@@ -58,7 +58,38 @@ string_descricao_do_item: .asciiz"Descricao do item: "
 	addi $sp, $sp, 4 #voltando a pilha pro lugar original
 .end_macro
 
+.macro macro_print_number_on_MMIO(%number)
+	addi $sp, $sp, -8
+	sw $a0, 0($sp) #Salvando o valor de $a0
+	sw $ra, 4($sp) #Salvando o valor de $ra para poder voltar a funcao
+	add $a0, %number, $0
+	jal print_number_on_MMIO
+	lw $a0, 0($sp)	#Recuperando o $a0 antigo
+	lw $ra, 4($sp) #Recuperando o $a0 antigo
+	addi $sp, $sp, 8 #voltando a pilha pro lugar original
+.end_macro
 
+.macro macro_print_string_on_MMIO(%string)
+	addi $sp, $sp, -8
+	sw $a0, 0($sp) #Salvando o valor de $a0
+	sw $ra, 4($sp) #Salvando o valor de $ra para poder voltar a funcao
+	la $a0, %string
+	jal print_string_on_MMIO
+	lw $a0, 0($sp)	#Recuperando o $a0 antigo
+	lw $ra, 4($sp) #Recuperando o $a0 antigo
+	addi $sp, $sp, 8 #voltando a pilha pro lugar original
+.end_macro
+
+.macro macro_print_string_on_MMIO_from_memory(%memory)
+	addi $sp, $sp, -8
+	sw $a0, 0($sp) #Salvando o valor de $a0
+	sw $ra, 4($sp) #Salvando o valor de $ra para poder voltar a funcao
+	add $a0, %memory, $0
+	jal print_string_on_MMIO
+	lw $a0, 0($sp)	#Recuperando o $a0 antigo
+	lw $ra, 4($sp) #Recuperando o $a0 antigo
+	addi $sp, $sp, 8 #voltando a pilha pro lugar original
+.end_macro
 .text
 .globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio
 j end_cardapio
@@ -129,16 +160,20 @@ cardapio_ad: #Params ($a0 -> codigo do item  | int          2 bytes,
 	
 	falha_cardapio_cheio:
 		print_string(falha_criacao_item_cardapio_cheio)
+		macro_print_string_on_MMIO(falha_criacao_item_cardapio_cheio)
+	
 		addi $v0, $0, 1 #1 significa falha
 		j fim_cardapio_ad
 		
 	falha_cardapio_codigo_existe:
 		print_string(falha_criacao_item_cardapio_codigo_cadastrado)
+		macro_print_string_on_MMIO(falha_criacao_item_cardapio_codigo_cadastrado)
 		addi $v0, $0, 1
 		j fim_cardapio_ad
 		
 	falha_cardapio_codigo_alcance:
 		print_string(falha_criacao_item_cardapio_codigo_invalido)
+		macro_print_string_on_MMIO(falha_criacao_item_cardapio_codigo_invalido)
 		addi $v0, $0, 1
 		j fim_cardapio_ad
 	sucesso:
@@ -200,10 +235,12 @@ cardapio_rm:  #Params ($a0 -> codigo do item  | int  2 byts)
 	j fim_cardapio_rm
 	falha_cardapio_rm_codigo_inexistente:
 		print_string(falha_remover_item_cardapio_codigo_nao_cadastrado)
+		macro_print_string_on_MMIO(falha_remover_item_cardapio_codigo_nao_cadastrado)
 		addi $v0, $0, 1 #1 significa falha
 		j fim_cardapio_rm
 	falha_cardapio_rm_codigo_alcance:
 		print_string(falha_remover_item_cardapio_codigo_invalido)
+		macro_print_string_on_MMIO(falha_remover_item_cardapio_codigo_invalido)
 		addi $v0, $0, 1 #1 significa falha
 		j fim_cardapio_rm
 fim_cardapio_rm: 
@@ -226,6 +263,8 @@ cardapio_list: #Params (None)
 	addi $t2, $0, 1
 	beq $t0, $0, aviso_cardapio_list #Se a lista estiver vazia, retornar apenas o aviso
 	
+	#print_string(line_breaker)
+	#macro_print_string_on_MMIO(line_breaker)
 	loop_cardapio_list:
 		bgtu $t2, $t1, fim_cardapio_list  #se $t2 ultrapassar o limite do cardapio, indica que já esgotamos todos os possiveis prints de itens
 		add $a0, $0, $t2 #copiando o atual valor de $t2 para servir de entrada para a função de checagem
@@ -241,34 +280,44 @@ cardapio_list: #Params (None)
 		add $t4, $t4, $t3 #E com essa soma chegamos exatamente a posição de memória do item do cardápio
 		lhu $t3, 0($t4) #Carregando o valor do código do item
 		 print_string(string_codigo_do_item)
+		 macro_print_string_on_MMIO(string_codigo_do_item)
 		 print_int($t3)
+		 macro_print_number_on_MMIO($t3)
 		 print_string(line_breaker)
+		 macro_print_string_on_MMIO(line_breaker)
 		 #Printando o preço do item
 		 lbu $t3, tamanho_codigo_item_cardapio #Carregando o tamanho do código do item
 		 add $t4, $t3, $t4 #Somando o local da memória com o tamanho do código, fazendo com que $t4 esteja agora no preço do item
 		 lhu $t3, 0($t4) #Carregando o valor do preço do item
 		 print_string(string_valor_do_item)
+		 macro_print_string_on_MMIO(string_valor_do_item)
 		 print_int($t3)
+		 macro_print_number_on_MMIO($t3)
 		 print_string(line_breaker)
+		 macro_print_string_on_MMIO(line_breaker)
 		 #Printando a descrição do item
 		 lbu $t3, tamanho_preco_item_cardapio #Carregando o tamanho do preço do item
 		 add $t4, $t3, $t4 #Somando o local da memória com o tamanho do preço, fazendo com que $t4 esteja agora na descrição
 		 print_string(string_descricao_do_item)
+		 macro_print_string_on_MMIO(string_descricao_do_item)
 		 #não utilizei o macro já que ele carrega um  endereço dentro ele, e, $t4 já possui um endereço
 		addi $sp, $sp, -4
 		sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
 		addi $v0, $0, 4
 		add $a0, $0, $t4
+		macro_print_string_on_MMIO_from_memory($a0)
 		syscall
 		lw $a0, 0($sp)	#Recuperando o $a0 antigo
 		addi $sp, $sp, 4 #voltando a pilha pro lugar original
 		 print_string(line_breaker)
+		 macro_print_string_on_MMIO(line_breaker)
 		 
 		nao_fazer_print_cardapio_list:	
 			addi $t2, $t2, 1 #incrementando o valor de $t2 até chegar no limite do cardápio ($t1)
 			j loop_cardapio_list
 	 aviso_cardapio_list:
 	 	print_string(aviso_listar_cardapio)
+	 	macro_print_string_on_MMIO(aviso_listar_cardapio)
 	 	
 	fim_cardapio_list:
 	lw $a0, 0($sp)	#Recuperando o $a0 antigo

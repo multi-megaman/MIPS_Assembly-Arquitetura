@@ -45,7 +45,7 @@ add $a0, $a1, $0
 li $v0, 1
 syscall
 
-add $a0, $a1
+add $a0, $a1, $0
 
 
 
