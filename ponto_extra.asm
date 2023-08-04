@@ -34,6 +34,7 @@ white_space_3: .space 14
 .end_macro
 
 .text
+j fim_mmio
 	lui	$s0,0xffff	#ffff0000
 	la $s2, USER_COMMAND #$s2 vai ser responsavel por escrever byte a byte em USER_COMMAND
 	lw $s4, tamanho_user_command 
@@ -101,3 +102,5 @@ new_line:
 print_string_on_mmio_display: #Params ($a0 -> endereco de memoria onde a string estah, essa funcao vai imprimir a string ate achar um \0 | address int)
 
 jr $ra #Return (None)
+
+fim_mmio:

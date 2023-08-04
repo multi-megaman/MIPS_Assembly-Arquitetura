@@ -3,8 +3,8 @@
 #Macros
 
 string_funcionou_1: .asciiz "deu perfeitamente certo "
-parser_comando_invalido: "COMANDO INVALIDO!!!"
-parse_string_string_invalida: .asciiz "String invalida"
+parser_comando_invalido: "COMANDO INVALIDO!!!\n"
+parse_string_string_invalida: .asciiz "String invalida\n"
 .macro print_string(%string)
 	addi $sp, $sp, -4
 	sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
@@ -83,7 +83,7 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 			
 			
 			parse_string_cardapio_ad: #100%
-				blt $t9, 3, parse_string_invalida #verifica se foram informados menos do que 3 argumentos
+				blt $t9, 2, parse_string_invalida #verifica se foram informados menos do que 3 argumentos
 				add $a3, $a0, $0 #movendo o valor de $a0 para $a3 pois e o argumento usado na funcao abaixo
 				jal converter_string_para_int #função que converter uma String em um valor inteiro
 				add $a0, $v0, $0 #movendo o resultado para $a0
@@ -210,7 +210,7 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				
 
 	parse_string_invalida: #parte do codigo que vai servir para quando a string digitada não atender aos padrões
-		print_string parser_comando_invalido
+		print_string(parser_comando_invalido)
 		j super_hiper_end
 		
 
