@@ -75,7 +75,8 @@ backspace:
   sb $t3,12($t0)     # Escreve o caractere vazio no endereço de saída MMIO
   sb $t0,12($t0)     # Escreve novamente o caractere lido (o que estava antes do backspace) no endereço de saida MMIO
   j waitloop        # Continua lendo caracteres
-  
+
+#!!!!!!!!!!!!!!!!!===========Eh aqui que o comando eh enviado para o parser ===========!!!!!!!!!!!!!!!!!
 new_line:
 	
 	sw $t8,12($t0)	#Salvando o "\n" no display
@@ -83,7 +84,8 @@ new_line:
 	print_string(teste_line_breaker)
 	
 	#TO DO  = Envia a string condita em USER_COMMAND para a funcao do parser
-	
+	la $a0, USER_COMMAND
+	jal parse_string
 	#zerar USER_COMMAND
 	la $t2, USER_COMMAND  #$t2 vai ser responsavel por escrever byte a byte em USER_COMMAND
 	loop_zerar_user_command:

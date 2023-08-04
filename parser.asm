@@ -130,7 +130,7 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				add $a3, $a1, $0 #uso da funcao string para int
 				jal converter_string_para_int
 				add $a1, $v0, $0
-				jal mesa_ad_item
+				#jal mesa_ad_item
 				j super_hiper_end
 				
 			parse_string_mesa_rm_item: #100%
@@ -140,7 +140,7 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				add $a3, $a1, $0 #uso da funcao string para int
 				jal converter_string_para_int
 				add $a1, $v0, $0
-				jal mesa_rm_item
+				#jal mesa_rm_item
 				j super_hiper_end
 				
 			parse_string_mesa_f:
@@ -150,7 +150,7 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				beq $t1, 101, parse_string_mesa_fechar #comparando com "e"
 				
 				parse_string_mesa_format: #100% 
-					jal mesa_format #pula para a função informada
+					#jal mesa_format #pula para a função informada
 					j super_hiper_end
 					
 				parse_string_mesa_fechar: #100%
