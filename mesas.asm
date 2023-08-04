@@ -101,9 +101,6 @@ jr $ra #end_mesa_format
 #$a0 - numero das mesa
 #$a1 - codigo do produto
 mesa_ad_item:
-
-
-
 	addi $sp, $sp, -4 #Reservando espaco na memoria para salvar o $ra
 	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
 	jal checar_ocupacao_mesa #recebendo $a0 como entrada (numero da mesa) para ver se ele j� existe.
@@ -113,16 +110,15 @@ mesa_ad_item:
 	beq $v1, 0, mesa_desocupada_error
 	beq $v0, 1, fim_mesa_ad_item
 	
-	#Checando para ver se o codigo produto digitado esta entre 1-20
-	#lhu $t0, limite_cardapio
-	#bge $a1, 1, checar_limite_superior # Se $a0 >= 1
-	#j falha_cardapio_codigo_alcance  # Pula para o final da funcao
 
-	#checar_limite_superior:
-	#ble $a1, $t0, dentro_do_limite    # Se $a0 <= limite_cardapio(20) significa que ele esta dentro do limite 1-20
-	#j falha_cardapio_codigo_alcance  # Pula para o final da funcao
+	addi $sp, $sp, -4 #Reservando espaco na memoria para salvar o $ra
+	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
+	jal checar_codigo_cardapio_valido #recebendo $a1 como entrada codigo produto;
+	lw $ra, 0($sp)	#Recupenrando o $ra antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
 	
-	#dentro_do_limite:
+	beq $v0, 1, fim_mesa_ad_item
+	
 	la $t0, mesas #$t0 comeca no inicio do gerenciador de mesas e vai percorrendo de mesa em mesa
 	lbu $t4, tamanho_mesa # obtem o tamanho de uma mesa
 	subi $t1, $a0, 1 #remove 1 do numero da mesa para obter o indice
@@ -156,7 +152,7 @@ mesa_ad_item:
 	    j adiciona_preco
 	adiciona_preco:
 	    add $a0, $0, $a1 #colocando codigo do produto em $a0
-	    addi $sp, $sp, -4 #Reservando espaco na memoria para salvar o $ra
+	    addi $sp, $sp, -4 #Reservando espa�o na mem�ria para salvar o $ra
 	    sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
 	    jal retornar_infos_item_cardapio #Params ($a0 -> id do item que o usuario gostaria de ter o nome e o preco)
 	    lw $ra, 0($sp)	#Recupenrando o $ra antigo
@@ -170,8 +166,7 @@ mesa_ad_item:
 	 
 	 mesa_desocupada_error:
 	 print_string(falha_mesa_desocupada)
-	 jr $ra
-	    falha_cardapio_codigo_alcance:	
+	 jr $ra	
 	    fim_mesa_ad_item:
 	    jr $ra   
 	    
@@ -236,6 +231,24 @@ checar_ocupacao_mesa: #Params ($a0 -> id da mesa que serah checada | int)
 jr $ra # Return ($v0 -> 0 se a mesa estiver existir, 1 se o id nao estiver no range (1-limite_mesas), int,
 			  #$v1 -> retorna 0 se a mesa estiver disponivel, caso esteja indisponivel, $v1 retorna 1, retorna -1 caso a mesa nao exista | address int )
 
+
+checar_codigo_cardapio_valido: #Params ($a1 > id do codigo do produto que sera checado | int)
+#Checando para ver se o codigo produto digitado esta entre 1-20
+	lhu $t0, limite_cardapio
+	bge $a1, 1, checar_limite_cardapio_superior # Se $a0 >= 1
+	j falha_cardapio_codigo_alcance  # Pula para o final da funcao
+
+	checar_limite_cardapio_superior:
+	ble $a1, $t0, dentro_do_limite_cardapio    # Se $a0 <= limite_cardapio(20) significa que ele esta dentro do limite 1-20
+	j falha_cardapio_codigo_alcance  # Pula para o final da funcao
+	falha_cardapio_codigo_alcance:
+		print_string(falha_codigo_cardapio_invalido)
+		addi $v0, $0, 1 #1 = out of range
+		j fim_checar_codigo_cardapio_valido
+	dentro_do_limite_cardapio:
+	addi $v0, $0, 1 #1 = out of range
+	fim_checar_codigo_cardapio_valido:
+	jr $ra #return ($v0 = 0 se estiver ok, =1 se nao estiver ok) 
 fim_mesas:
 
 
