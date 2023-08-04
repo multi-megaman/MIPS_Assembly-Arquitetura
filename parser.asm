@@ -13,29 +13,17 @@
 	addi $sp, $sp, 4 #voltando a pilha pro lugar original
 .end_macro
 
-
-string_teste_parse: .asciiz "cardapio_ad-15-00490-coca cola" #vai servir para testar o parse da string
-
 .text
-
-main:
-#j parse_string_testes #vai pular diretamente para a area do parse da String
-la $a0, string_teste_parse
-j parse_string
-
-zona_testes_parse_string:
-
-li $v0, 1
-syscall
-
-add $a0, $a1, $0
-syscall
-
-j super_hiper_end
+.globl parse_string, converter_string_para_int
 
 
 #======================Parse da String=================
+j super_hiper_end
+
 parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a2, $a3) e pula diretamente para a função informada na String
+	addi $sp, $sp, -4
+	sw $ra, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
+
 	#codigo dos char: (- = 45) ( _ = 95) (a = 97) (c = 99) (f = 102) (i = 105) (l = 108) (m = 109) (0 = 111) {p = 112} (r = 114) (s = 115)
 	add $t0, $0, $a0 #movendo o endereço base da String para $t0
 	add $t9, $0, $a0 #salvando o endereço inicial da String em $t9 para ser usado depois da separação da String
@@ -94,7 +82,9 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				add $a3, $a1, $0
 				jal converter_string_para_int
 				add $a1, $v0, $0
-				j zona_testes_parse_string
+				lw $ra, 0($sp)	#Recuperando o $a0 antigo
+				addi $sp, $sp, 4 #voltando a pilha pro lugar original
+				jr $ra
 				#j cardapio_ad 
 			parse_string_cardapio_rm:
 				#j cardapio_rm
