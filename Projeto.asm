@@ -39,13 +39,13 @@ j parse_string
 zona_testes_parse_string:
 
 li $v0, 1
-#syscall
+syscall
 
 add $a0, $a1, $0
 li $v0, 1
-#syscall
+syscall
 
-
+add $a0, $a1
 
 
 
