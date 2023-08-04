@@ -35,16 +35,36 @@ tamanho_quantidade_item_mesa: .byte 2       #Indica o tamanho da quantidade de u
 tamanho_item_geral_mesa: .byte 4		#Indica o tamanho total de um �nico item do cardapio
 tamanho_registro_de_pedidos: .byte 20       #Indica quantos pedidos difedentes podem ser feitos
 tamanho_valor_a_ser_pago: .half 32		#Indica o tamanho do valor a ser pago
+
+#Falhas==
+falha_codigo_mesa_invalido: .asciiz "Falha: mesa inexistente\n"
+#macros
+.macro print_string(%string)
+	addi $sp, $sp, -4
+	sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
+	
+	addi $v0, $0, 4
+	la $a0, %string
+	syscall
+	
+	lw $a0, 0($sp)	#Recuperando o $a0 antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
+.end_macro
 tamanho_ate_o_registro_pedidos: .byte 76 # tamanho para o registro de pedidos
 tamanho_registro_pedidos: .byte 80 # tamanho para o registro de pedidos
 .text
 
-.globl  mesa_format, mesa_ad_item
+.globl  mesa_iniciar, mesa_format, mesa_ad_item
 
 j fim_mesas
 
-# ==== Fun��o para formatar as mesas =====
-mesa_format:
+# ===== Funcao para iniciar uma mesa =====
+mesa_iniciar: #Params
+
+jr $ra #Return ($v0 -> 0 para sucesso, 1 para falha | bool)
+
+# ==== Funcao para formatar as mesas =====
+mesa_format: #Params (None)
     la $t0, mesas #$t0 come�a no inicio do gerenciador de mesas e vai percorrendo de mesa em mesa
     lhu $t1, limite_mesas #$t1 define a quantidade m�xima de mesas (15)
     lbu $t2, tamanho_codigo_mesa 
@@ -144,7 +164,36 @@ mesa_ad_item:
 	    
 	    falha_mesa_codigo_alcance:
 	    falha_cardapio_codigo_alcance:
-j fim_mesas
+j fim_mesas #Return (None)
+
+#============ Funcoes Extras ===============
+
+#===== Checar se uma mesa de id $a0 estah ocupada ou nao =====
+checar_ocupacao_mesa: #Params ($a0 -> id da mesa que serah checada | int)
+    	la $t0, mesas #$t0 marca o inicio do gerenciador de mesas
+    	lhu $t1, limite_mesas #$t1 define a quantidade m�xima de mesas (15)
+   	addi $t2, $0, 1 #$t2 vai percorrer de 1 at� o limite
+    	lhu $t3, tamanho_mesa
+    	lbu $t5, tamanho_codigo_mesa
+
+	#Checando se o id da mesa inserido estah no intervalo entre 1-limite_mesas
+	bge $a0, 1, checar_limite_superior_mesa # Se $a0 >= 1
+	j falha_mesa_codigo_alcance  # Pula para o final da fun��o
+
+	checar_limite_superior_mesa:
+	ble $a0, $t1, dentro_do_limite    # Se $a0 <= limite_cardapio(20) significa que ele est� dentro do limite 1-20
+	j falha_mesa_codigo_alcance  # Pula para o final da fun��o
+	
+	dentro_do_limite:
+	
+	falha_mesa_codigo_alcance:
+		print_string(falha_codigo_mesa_invalido)
+		addi $v0, $0, 2 #2 = out of range
+		addi $v1, $0, -1 #-1 = inexistente
+ 
+	fim_checar_ocupacao_mesa:
+jr $ra # Return ($v0 -> 1 se a mesa estiver ocupada, 0 se estiver desocupada, 2 se o id nao estiver no range (1-limite_mesas), int,
+			  #$v1 -> retorna a posicao do primeiro byte da mesa se ela estiver disponivel, caso esteja indisponivel, $v1 retorna -1 | address int )
 
 fim_mesas:
 
