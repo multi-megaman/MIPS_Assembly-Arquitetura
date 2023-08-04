@@ -3,7 +3,7 @@
 string_usuario: .space 59
 input_string_usuario: .asciiz"Digite um coment�rio para o item por favor: "
 #white_space: .space 24 #S� para o card�pio come�ar em um lugar mais bonitinho no visualizador do MARS
-string_teste_parse: .asciiz "cardapio_ad-15-00490-coca cola" #vai servir para testar o parse da string
+
 
 .macro print_string(%string)
 	addi $sp, $sp, -4
@@ -28,22 +28,28 @@ string_teste_parse: .asciiz "cardapio_ad-15-00490-coca cola" #vai servir para te
 	lw $a0, 0($sp)	#Recuperando o $a0 antigo
 	addi $sp, $sp, 4 #voltando a pilha pro lugar original
 .end_macro
+string_teste_parse: .asciiz "formatar" #vai servir para testar o parse da string
 
 .text
+.globl zona_testes_parse_string
 main:
-#j parse_string_testes #vai pular diretamente para a area do parse da String
 la $a0, string_teste_parse
-jal parse_string
+j parse_string
 
 zona_testes_parse_string:
 
 li $v0, 1
-syscall
+#syscall
 
 add $a0, $a1, $0
-syscall
+li $v0, 1
+#syscall
 
-#j super_end
+
+
+
+
+j super_end
 
 #!!!!!!!!!!!!!! INICIO DA ZONA DE TESTES !!!!!!!!!!!!!!!!!!!!!!!!!
 #---�rea de testes para pegar a descri��o do usu�rio, essa parte ser� substituida com o CLI posterior, mas por agora para se adicionar um item no card�pio, � preciso ler essa string
