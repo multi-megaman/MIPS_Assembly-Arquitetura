@@ -3,6 +3,7 @@
 #Macros
 
 string_funcionou_1: .asciiz "deu perfeitamente certo "
+parser_comando_invalido: "COMANDO INVALIDO!!!"
 parse_string_string_invalida: .asciiz "String invalida"
 .macro print_string(%string)
 	addi $sp, $sp, -4
@@ -64,10 +65,12 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 
 	parse_string_fim: #codigo que vai direcionar para onde o programa vai :)
 		add $t0, $0, $t9 #movendo o endereço base da String de $t9 para #t0
+		add $t9, $t1, $0 #movendo o contador de argumento para $t9 para poder verificar se os argumentos foram informados corretamente
 		lb $t1, 0($t0) #carregando o primeiro char da String
 		beq $t1, 99, parse_string_cardapio #compara o char com "c" para saber se e um comando de cardapio
 		beq $t1, 109, parse_string_mesa #compara o char com "m" para saber se e um comando de mesa
 		j parse_string_arquivo #como só sobrou comandos de arquivo pula diretamente
+		j parse_string_invalida
 		
 		parse_string_cardapio:
 			addi $t0, $t0, 9 #somando 9 ao endereço pois vai direto para o char depois do "_"
@@ -76,9 +79,11 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 			beq $t1, 114, parse_string_cardapio_rm #comparando com "r"
 			beq $t1, 108, parse_string_cardapio_list #comparando com "l"
 			beq $t1, 102, parse_string_cardapio_format #comparando com f
+			j parse_string_invalida
 			
 			
 			parse_string_cardapio_ad: #100%
+				blt $t9, 3, parse_string_invalida #verifica se foram informados menos do que 3 argumentos
 				add $a3, $a0, $0 #movendo o valor de $a0 para $a3 pois e o argumento usado na funcao abaixo
 				jal converter_string_para_int #função que converter uma String em um valor inteiro
 				add $a0, $v0, $0 #movendo o resultado para $a0
@@ -89,6 +94,7 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				j super_hiper_end
 				 
 			parse_string_cardapio_rm: #100%
+				beq $t9, 0, parse_string_invalida #verifica se nenhum argumento foi informado
 				add $a3, $a0, $0 #uso da funcao string para int
 				jal converter_string_para_int
 				add $a0, $v0, $0
@@ -111,7 +117,7 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 			beq $t1, 114, parse_string_mesa_rm_item #compara com "r"
 			beq $t1, 102, parse_string_mesa_f #compara com "f"
 			beq $t1, 112, parse_string_mesa_p #compara com "p"
-			
+			j parse_string_invalida
 			
 			
 			
@@ -148,6 +154,7 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				lb $t1, 0($t0) #carregando o char
 				beq $t1, 111, parse_string_mesa_format #comparando com "o"
 				beq $t1, 101, parse_string_mesa_fechar #comparando com "e"
+				j parse_string_invalida
 				
 				parse_string_mesa_format: #100% 
 					#jal mesa_format #pula para a função informada
@@ -165,6 +172,7 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				lb $t1, 0($t0) #carrega o char
 				beq $t1, 114, parse_string_mesa_parcial #compara com "r"
 				beq $t1, 103, parse_string_mesa_pagar #compara com "g"
+				j parse_string_invalida
 				
 				parse_string_mesa_parcial: #100%
 					add $a3, $a0, $0 #uso da funcao string para int
@@ -187,6 +195,7 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 			beq $t1, 115, parse_string_arquivo_salvar #compara com "s"
 			beq $t1, 114, parse_string_arquivo_recarregar #compara com "r"
 			beq $t1, 102, parse_string_arquivo_formatar #compara com "f"
+			j parse_string_invalida
 			
 			
 			parse_string_arquivo_salvar: #100%
@@ -201,7 +210,8 @@ parse_string: #função que separa a string informada em paramentros ($a0, $a1, $a
 				
 
 	parse_string_invalida: #parte do codigo que vai servir para quando a string digitada não atender aos padrões
-		print_string parse_string_string_invalida #incompleto
+		print_string parser_comando_invalido
+		j super_hiper_end
 		
 
 	
