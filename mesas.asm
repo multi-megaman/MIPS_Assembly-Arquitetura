@@ -38,6 +38,8 @@ tamanho_valor_a_ser_pago: .half 32		#Indica o tamanho do valor a ser pago
 
 #Falhas==
 falha_codigo_mesa_invalido: .asciiz "Falha: mesa inexistente\n"
+falha_codigo_cardapio_invalido: .asciiz "Falha: codigo cardapio invalido\n"
+falha_mesa_desocupada: .asciiz "Falha: mesa desocupada\n"
 #macros
 .macro print_string(%string)
 	addi $sp, $sp, -4
@@ -54,7 +56,7 @@ tamanho_ate_o_registro_pedidos: .byte 76 # tamanho para o registro de pedidos
 tamanho_registro_pedidos: .byte 80 # tamanho para o registro de pedidos
 .text
 
-.globl  mesa_iniciar, mesa_format, mesa_ad_item
+.globl  mesa_iniciar, mesa_format, mesa_ad_item, mesa_rm_item
 
 j fim_mesas
 
@@ -100,28 +102,27 @@ jr $ra #end_mesa_format
 #$a1 - codigo do produto
 mesa_ad_item:
 
-#Checando para ver se o codigo da mesadigitado esta entre 1-15
 
-	lhu $t0, limite_mesas
-	bge $a0, 1, checar_limite_superior_mesa # Se $a0 >= 1
-	j falha_mesa_codigo_alcance  # Pula para o final da funcao
 
-	checar_limite_superior_mesa:
-	ble $a0, $t0, dentro_do_limite    # Se $a0 <= limite_cardapio(20) significa que ele est� dentro do limite 1-20
-	j falha_mesa_codigo_alcance  # Pula para o final da funcao
+	addi $sp, $sp, -4 #Reservando espaco na memoria para salvar o $ra
+	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
+	jal checar_ocupacao_mesa #recebendo $a0 como entrada (numero da mesa) para ver se ele j� existe.
+	lw $ra, 0($sp)	#Recupenrando o $ra antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
 	
-	dentro_do_limite_mesa:
+	beq $v1, 0, mesa_desocupada_error
+	beq $v0, 1, fim_mesa_ad_item
 	
 	#Checando para ver se o codigo produto digitado esta entre 1-20
-	lhu $t0, limite_cardapio
-	bge $a1, 1, checar_limite_superior # Se $a0 >= 1
-	j falha_cardapio_codigo_alcance  # Pula para o final da funcao
+	#lhu $t0, limite_cardapio
+	#bge $a1, 1, checar_limite_superior # Se $a0 >= 1
+	#j falha_cardapio_codigo_alcance  # Pula para o final da funcao
 
-	checar_limite_superior:
-	ble $a1, $t0, dentro_do_limite    # Se $a0 <= limite_cardapio(20) significa que ele esta dentro do limite 1-20
-	j falha_cardapio_codigo_alcance  # Pula para o final da funcao
+	#checar_limite_superior:
+	#ble $a1, $t0, dentro_do_limite    # Se $a0 <= limite_cardapio(20) significa que ele esta dentro do limite 1-20
+	#j falha_cardapio_codigo_alcance  # Pula para o final da funcao
 	
-	dentro_do_limite:
+	#dentro_do_limite:
 	la $t0, mesas #$t0 comeca no inicio do gerenciador de mesas e vai percorrendo de mesa em mesa
 	lbu $t4, tamanho_mesa # obtem o tamanho de uma mesa
 	subi $t1, $a0, 1 #remove 1 do numero da mesa para obter o indice
@@ -155,17 +156,54 @@ mesa_ad_item:
 	    j adiciona_preco
 	adiciona_preco:
 	    add $a0, $0, $a1 #colocando codigo do produto em $a0
+	    addi $sp, $sp, -4 #Reservando espaco na memoria para salvar o $ra
+	    sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
 	    jal retornar_infos_item_cardapio #Params ($a0 -> id do item que o usuario gostaria de ter o nome e o preco)
+	    lw $ra, 0($sp)	#Recupenrando o $ra antigo
+	    addi $sp, $sp, 4 #voltando a pilha pro lugar original
 	    add $t9, $0, $v0 #salvando valor do produto em #t9
 	    lhu $t2, ($t8) #obtem valor total ja existente
 	    add $t9, $t9, $t2 # adiciona valor do produto ao preco existente
 	    sh $t9, 0($t8) #Adiciona valor total (ler valor do produto no t9)
+	    jr $ra
 	    j fim_mesas
+	 
+	 mesa_desocupada_error:
+	 print_string(falha_mesa_desocupada)
+	 jr $ra
+	    falha_cardapio_codigo_alcance:	
+	    fim_mesa_ad_item:
+	    jr $ra   
 	    
-	    falha_mesa_codigo_alcance:
-	    falha_cardapio_codigo_alcance:
 j fim_mesas #Return (None)
 
+mesa_rm_item:
+lhu $t0, limite_mesas
+
+#fazer validacoes 
+
+#inicio
+	la $t0, mesas #$t0 comeca no inicio do gerenciador de mesas e vai percorrendo de mesa em mesa
+	lbu $t4, tamanho_mesa # obtem o tamanho de uma mesa
+	subi $t1, $a0, 1 #remove 1 do numero da mesa para obter o indice
+	multu $t1,$t4 	#Calculando o offset para se chegar no proximo espaco de memoria livre reservado para uma mesa (160 bytes).
+	mflo $t5 	#$t5 recebe o resultado da multiplicacao anterior
+	add $t0, $t0, $t5 #move $t0 para o local da mesa
+	lbu $t6, tamanho_ate_o_registro_pedidos #distancia ate o registro de pedidos
+	lbu $t8, tamanho_registro_pedidos #tamanho maximo registro de pedidos
+	add $t0, $t0, $t6 # soma o inicio com a distancia
+	add $t8, $t8, $t0 #local final do registro pedidos (e inico do valor total)
+	
+	search_space_remove:
+	lhu $t7, ($t0) #le se existe um codigo de produto
+	beq $t7, $0, remove_item_nao_existe #se valor for zero, nao tem pedido
+	beq $t7, $a1 remover_um_item # true se o pedido ja exisitir, remove um para o pedido existente
+	bge $t0, $t8, fim_mesas #verificar se ja se passou 20 vagas
+	addi $t0, $t0, 4 #vai para a proxima casa de registro
+	j search_space_remove
+	remover_um_item:
+	remove_item_nao_existe:
+j fim_mesas #Return (None)
 #============ Funcoes Extras ===============
 
 #===== Checar se uma mesa de id $a0 estah ocupada ou nao =====
@@ -185,15 +223,18 @@ checar_ocupacao_mesa: #Params ($a0 -> id da mesa que serah checada | int)
 	j falha_mesa_codigo_alcance  # Pula para o final da fun��o
 	
 	dentro_do_limite:
-	
+	addi $v0, $0, 0 #0 = mesa existente
+	lbu $t4, 2($t0) #$t4 recebe se a mesa esta disponivel ou indisponivel
+	add $v1, $0, $t4 #v1 possui 1 se a mesa esta ocupada, e zero se a mesa esta desocupada
+	j fim_checar_ocupacao_mesa
 	falha_mesa_codigo_alcance:
 		print_string(falha_codigo_mesa_invalido)
-		addi $v0, $0, 2 #2 = out of range
+		addi $v0, $0, 1 #1 = out of range
 		addi $v1, $0, -1 #-1 = inexistente
  
 	fim_checar_ocupacao_mesa:
-jr $ra # Return ($v0 -> 1 se a mesa estiver ocupada, 0 se estiver desocupada, 2 se o id nao estiver no range (1-limite_mesas), int,
-			  #$v1 -> retorna a posicao do primeiro byte da mesa se ela estiver disponivel, caso esteja indisponivel, $v1 retorna -1 | address int )
+jr $ra # Return ($v0 -> 0 se a mesa estiver existir, 1 se o id nao estiver no range (1-limite_mesas), int,
+			  #$v1 -> retorna 0 se a mesa estiver disponivel, caso esteja indisponivel, $v1 retorna 1, retorna -1 caso a mesa nao exista | address int )
 
 fim_mesas:
 
