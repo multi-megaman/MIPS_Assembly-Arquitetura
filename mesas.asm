@@ -101,9 +101,9 @@ jr $ra #end_mesa_format
 #$a0 - numero das mesa
 #$a1 - codigo do produto
 mesa_ad_item:
-	addi $sp, $sp, -4 #Reservando espaco na memoria para salvar o $ra
+	addi $sp, $sp, -4 #Reservando espaço na memória para salvar o $ra
 	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
-	jal checar_ocupacao_mesa #recebendo $a0 como entrada (numero da mesa) para ver se ele jï¿½ existe.
+	jal checar_ocupacao_mesa #recebendo $a0 como entrada (numero da mesa) para ver se ele já existe.
 	lw $ra, 0($sp)	#Recupenrando o $ra antigo
 	addi $sp, $sp, 4 #voltando a pilha pro lugar original
 	
@@ -111,7 +111,7 @@ mesa_ad_item:
 	beq $v0, 1, fim_mesa_ad_item
 	
 
-	addi $sp, $sp, -4 #Reservando espaco na memoria para salvar o $ra
+	addi $sp, $sp, -4 #Reservando espaço na memória para salvar o $ra
 	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
 	jal checar_codigo_cardapio_valido #recebendo $a1 como entrada codigo produto;
 	lw $ra, 0($sp)	#Recupenrando o $ra antigo
@@ -152,7 +152,7 @@ mesa_ad_item:
 	    j adiciona_preco
 	adiciona_preco:
 	    add $a0, $0, $a1 #colocando codigo do produto em $a0
-	    addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
+	    addi $sp, $sp, -4 #Reservando espaço na memória para salvar o $ra
 	    sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
 	    jal retornar_infos_item_cardapio #Params ($a0 -> id do item que o usuario gostaria de ter o nome e o preco)
 	    lw $ra, 0($sp)	#Recupenrando o $ra antigo
@@ -176,8 +176,25 @@ mesa_rm_item:
 lhu $t0, limite_mesas
 
 #fazer validacoes 
+	addi $sp, $sp, -4 #Reservando espaço na memória para salvar o $ra
+	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
+	jal checar_ocupacao_mesa #recebendo $a0 como entrada (numero da mesa) para ver se ele já existe.
+	lw $ra, 0($sp)	#Recupenrando o $ra antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
+	
+	beq $v1, 0, mesa_desocupada_error
+	beq $v0, 1, fim_mesa_rm_item
+	
 
+	addi $sp, $sp, -4 #Reservando espaço na memória para salvar o $ra
+	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
+	jal checar_codigo_cardapio_valido #recebendo $a1 como entrada codigo produto;
+	lw $ra, 0($sp)	#Recupenrando o $ra antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
+	
+	beq $v0, 1, fim_mesa_rm_item
 #inicio
+
 	la $t0, mesas #$t0 comeca no inicio do gerenciador de mesas e vai percorrendo de mesa em mesa
 	lbu $t4, tamanho_mesa # obtem o tamanho de uma mesa
 	subi $t1, $a0, 1 #remove 1 do numero da mesa para obter o indice
@@ -197,7 +214,29 @@ lhu $t0, limite_mesas
 	addi $t0, $t0, 4 #vai para a proxima casa de registro
 	j search_space_remove
 	remover_um_item:
+	    lhu $t7, 2($t0) #obtem a quantidade atual de produtos existentes
+	    subi $t7, $t7, 1 #remove mais um na quantidade
+	    sh $t7, 2($t0) #adiciona nova quantidade
+	    #validar se a nova quantidade for 0
+	    add $a0, $0, $a1 #colocando codigo do produto em $a0
+	    addi $sp, $sp, -4 #Reservando espaço na memória para salvar o $ra
+	    sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
+	    jal retornar_infos_item_cardapio #Params ($a0 -> id do item que o usuario gostaria de ter o nome e o preco)
+	    lw $ra, 0($sp)	#Recupenrando o $ra antigo
+	    addi $sp, $sp, 4 #voltando a pilha pro lugar original
+	    add $t9, $0, $v0 #salvando valor do produto em #t9
+	    lhu $t2, ($t8) #obtem valor total ja existente
+	    sub $t9, $t9, $t2 # remove o valor do produto ao preco existente
+	    sh $t9, 0($t8) #substitui valor total (ler valor do produto no t9)
+	    beq $t7, $0, item_zerado
+	    jr $ra
+	item_zerado:
+	#remove o item da memoria
+	sh $0, 0($t0)#esvazia o item da memoria
+	jr $ra
 	remove_item_nao_existe:
+	fim_mesa_rm_item:
+	jr $ra
 j fim_mesas #Return (None)
 #============ Funcoes Extras ===============
 
