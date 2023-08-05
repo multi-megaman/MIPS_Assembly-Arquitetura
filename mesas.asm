@@ -40,6 +40,7 @@ tamanho_valor_a_ser_pago: .half 32		#Indica o tamanho do valor a ser pago
 falha_codigo_mesa_invalido: .asciiz "Falha: mesa inexistente\n"
 falha_codigo_cardapio_invalido: .asciiz "Falha: codigo cardapio invalido\n"
 falha_mesa_desocupada: .asciiz "Falha: mesa desocupada\n"
+falha_mesa_ocupada: .asciiz "Falha: mesa ocupada\n"
 #macros
 .macro print_string(%string)
 	addi $sp, $sp, -4
@@ -54,14 +55,15 @@ falha_mesa_desocupada: .asciiz "Falha: mesa desocupada\n"
 .end_macro
 tamanho_ate_o_registro_pedidos: .byte 76 # tamanho para o registro de pedidos
 tamanho_registro_pedidos: .byte 80 # tamanho para o registro de pedidos
+tamanho_ate_o_nome_responsavel: .byte 4 # tamanho para o registro de nome responsavel
+tamanho_ate_o_telefone_responsavel: .byte 65 # tamanho para o registro de telefone responsavel
 .text
 
 .globl  mesa_iniciar, mesa_format, mesa_ad_item, mesa_rm_item
 
 j fim_mesas
 
-# ===== Funcao para iniciar uma mesa =====
-mesa_iniciar: #Params
+
 
 jr $ra #Return ($v0 -> 0 para sucesso, 1 para falha | bool)
 
@@ -98,12 +100,65 @@ mesa_format: #Params (None)
     end_mesa_format:
 jr $ra #end_mesa_format
 
+#$a0 - codigo da mesa
+#$a1 - telefone responsavel
+#$a2 - nome responsavel
+# ===== Funcao para iniciar uma mesa =====
+mesa_iniciar:
+addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
+	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
+	jal checar_ocupacao_mesa #recebendo $a0 como entrada (numero da mesa) para ver se ele jï¿½ existe.
+	lw $ra, 0($sp)	#Recupenrando o $ra antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
+	
+	beq $v1, 1, mesa_ocupada_error
+	beq $v0, 1, fim_mesa_iniciar
+	
+	la $t9, mesas #$t0 comeca no inicio do gerenciador de mesas e vai percorrendo de mesa em mesa
+	lbu $t4, tamanho_mesa # obtem o tamanho de uma mesa
+	subi $t1, $a0, 1 #remove 1 do numero da mesa para obter o indice
+	multu $t1,$t4 	#Calculando o offset para se chegar no proximo espaco de memoria livre reservado para uma mesa (160 bytes).
+	mflo $t5 	#$t5 recebe o resultado da multiplicacao anterior
+	add $t9, $t9, $t5 #move $t0 para o local da mesa
+	
+	li $t6, 1 #prepara para deixar a mesa como ocupada
+	sh $t6, 2($t9) #deixa a mesa como ocupada
+	
+	lbu $t6, tamanho_ate_o_nome_responsavel #distancia ate o nome responsavel
+	add $t9, $t9, $t6 # soma o inicio com a distancia
+	
+	add $a3, $0, $t9  #Carregando o endereï¿½o destino da cï¿½pia de string para $a3
+	#a2 jï¿½ possui o valor da string que queremos copiar para $a3
+	addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
+	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
+	jal strcpy #recebendo $a2 como string que queremos copiar e $a3 como o destino da cï¿½pia
+	lw $ra, 0($sp)	#Recupenrando o $ra antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
+	#sh $a2, 0($t0) #salva nome do responsavel na memoria
+	
+	sub $t9, $t9, $t6 #volta pro comeco da mesa
+	lbu $t6, tamanho_ate_o_telefone_responsavel #distancia ate o telefone responsavel
+	add $t9, $t9, $t6 # soma o inicio com a distancia
+	add $a3, $0, $t9  #Carregando o endereï¿½o destino da cï¿½pia de string para $a3
+	move $a2, $a1
+	addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
+	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
+	jal strcpy #recebendo $a2 como string que queremos copiar e $a3 como o destino da cï¿½pia
+	lw $ra, 0($sp)	#Recupenrando o $ra antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
+	#sh $a1, 0($t0) #salva o telefone do responsavel
+	j fim_mesa_iniciar
+	mesa_ocupada_error:
+	 print_string(falha_mesa_ocupada)
+fim_mesa_iniciar:
+jr $ra
+
 #$a0 - numero das mesa
 #$a1 - codigo do produto
 mesa_ad_item:
-	addi $sp, $sp, -4 #Reservando espaço na memória para salvar o $ra
+	addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
 	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
-	jal checar_ocupacao_mesa #recebendo $a0 como entrada (numero da mesa) para ver se ele já existe.
+	jal checar_ocupacao_mesa #recebendo $a0 como entrada (numero da mesa) para ver se ele jï¿½ existe.
 	lw $ra, 0($sp)	#Recupenrando o $ra antigo
 	addi $sp, $sp, 4 #voltando a pilha pro lugar original
 	
@@ -111,7 +166,7 @@ mesa_ad_item:
 	beq $v0, 1, fim_mesa_ad_item
 	
 
-	addi $sp, $sp, -4 #Reservando espaço na memória para salvar o $ra
+	addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
 	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
 	jal checar_codigo_cardapio_valido #recebendo $a1 como entrada codigo produto;
 	lw $ra, 0($sp)	#Recupenrando o $ra antigo
@@ -152,7 +207,7 @@ mesa_ad_item:
 	    j adiciona_preco
 	adiciona_preco:
 	    add $a0, $0, $a1 #colocando codigo do produto em $a0
-	    addi $sp, $sp, -4 #Reservando espaço na memória para salvar o $ra
+	    addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
 	    sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
 	    jal retornar_infos_item_cardapio #Params ($a0 -> id do item que o usuario gostaria de ter o nome e o preco)
 	    lw $ra, 0($sp)	#Recupenrando o $ra antigo
@@ -176,9 +231,9 @@ mesa_rm_item:
 lhu $t0, limite_mesas
 
 #fazer validacoes 
-	addi $sp, $sp, -4 #Reservando espaço na memória para salvar o $ra
+	addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
 	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
-	jal checar_ocupacao_mesa #recebendo $a0 como entrada (numero da mesa) para ver se ele já existe.
+	jal checar_ocupacao_mesa #recebendo $a0 como entrada (numero da mesa) para ver se ele jï¿½ existe.
 	lw $ra, 0($sp)	#Recupenrando o $ra antigo
 	addi $sp, $sp, 4 #voltando a pilha pro lugar original
 	
@@ -186,7 +241,7 @@ lhu $t0, limite_mesas
 	beq $v0, 1, fim_mesa_rm_item
 	
 
-	addi $sp, $sp, -4 #Reservando espaço na memória para salvar o $ra
+	addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
 	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
 	jal checar_codigo_cardapio_valido #recebendo $a1 como entrada codigo produto;
 	lw $ra, 0($sp)	#Recupenrando o $ra antigo
@@ -207,32 +262,33 @@ lhu $t0, limite_mesas
 	add $t8, $t8, $t0 #local final do registro pedidos (e inico do valor total)
 	
 	search_space_remove:
-	lhu $t7, ($t0) #le se existe um codigo de produto
-	beq $t7, $0, remove_item_nao_existe #se valor for zero, nao tem pedido
-	beq $t7, $a1 remover_um_item # true se o pedido ja exisitir, remove um para o pedido existente
+	lhu $t1, ($t0) #le se existe um codigo de produto
+	beq $t1, $0, remove_item_nao_existe #se valor for zero, nao tem pedido
+	beq $t1, $a1 remover_um_item # true se o pedido ja exisitir, remove um para o pedido existente
 	bge $t0, $t8, fim_mesas #verificar se ja se passou 20 vagas
 	addi $t0, $t0, 4 #vai para a proxima casa de registro
 	j search_space_remove
 	remover_um_item:
-	    lhu $t7, 2($t0) #obtem a quantidade atual de produtos existentes
-	    subi $t7, $t7, 1 #remove mais um na quantidade
-	    sh $t7, 2($t0) #adiciona nova quantidade
+	    lhu $t9, 2($t0) #obtem a quantidade atual de produtos existentes
+	    subi $t9, $t9, 1 #remove mais um na quantidade
+	    sh $t9, 2($t0) #adiciona nova quantidade
 	    #validar se a nova quantidade for 0
 	    add $a0, $0, $a1 #colocando codigo do produto em $a0
-	    addi $sp, $sp, -4 #Reservando espaço na memória para salvar o $ra
+	    addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
 	    sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
+	    move $k0, $t0
 	    jal retornar_infos_item_cardapio #Params ($a0 -> id do item que o usuario gostaria de ter o nome e o preco)
 	    lw $ra, 0($sp)	#Recupenrando o $ra antigo
 	    addi $sp, $sp, 4 #voltando a pilha pro lugar original
-	    add $t9, $0, $v0 #salvando valor do produto em #t9
+	    add $t1, $0, $v0 #salvando valor do produto em #t9
 	    lhu $t2, ($t8) #obtem valor total ja existente
-	    sub $t9, $t9, $t2 # remove o valor do produto ao preco existente
-	    sh $t9, 0($t8) #substitui valor total (ler valor do produto no t9)
-	    beq $t7, $0, item_zerado
+	    sub $t1, $t1, $t2 # remove o valor do produto ao preco existente
+	    sh $t1, 0($t8) #substitui valor total (ler valor do produto no t9)
+	    beq $t9, $0, item_zerado
 	    jr $ra
 	item_zerado:
 	#remove o item da memoria
-	sh $0, 0($t0)#esvazia o item da memoria
+	sh $0, 0($k0)#esvazia o item da memoria
 	jr $ra
 	remove_item_nao_existe:
 	fim_mesa_rm_item:
@@ -257,6 +313,12 @@ checar_ocupacao_mesa: #Params ($a0 -> id da mesa que serah checada | int)
 	j falha_mesa_codigo_alcance  # Pula para o final da funï¿½ï¿½o
 	
 	dentro_do_limite:
+	
+	subi $t1, $a0, 1 #remove 1 do numero da mesa para obter o indice
+	multu  $t1,$t3 	#Calculando o offset para se chegar no proximo espaco de memoria livre reservado para uma mesa (160 bytes).
+	mflo $t5 	#$t5 recebe o resultado da multiplicacao anterior
+	add $t0, $t0, $t5 #move $t0 para o local da mesa
+	
 	addi $v0, $0, 0 #0 = mesa existente
 	lbu $t4, 2($t0) #$t4 recebe se a mesa esta disponivel ou indisponivel
 	add $v1, $0, $t4 #v1 possui 1 se a mesa esta ocupada, e zero se a mesa esta desocupada
@@ -285,7 +347,7 @@ checar_codigo_cardapio_valido: #Params ($a1 > id do codigo do produto que sera c
 		addi $v0, $0, 1 #1 = out of range
 		j fim_checar_codigo_cardapio_valido
 	dentro_do_limite_cardapio:
-	addi $v0, $0, 1 #1 = out of range
+	addi $v0, $0, 0 #0 = ok
 	fim_checar_codigo_cardapio_valido:
 	jr $ra #return ($v0 = 0 se estiver ok, =1 se nao estiver ok) 
 fim_mesas:

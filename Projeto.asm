@@ -2,8 +2,9 @@
 #testes
 string_usuario: .space 59
 input_string_usuario: .asciiz"Digite um comentario para o item por favor: "
-white_space: .space 24 #Soh para o cardapio comecar em um lugar mais bonitinho no visualizador do MARS
-
+white_space: .space 3 #Soh para o cardapio comecar em um lugar mais bonitinho no visualizador do MARS
+telefone_teste:.asciiz"08198765432"
+nome_teste:.asciiz"Jose Silva"
 .macro print_string(%string)
 	addi $sp, $sp, -4
 	sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
@@ -71,10 +72,21 @@ jal cardapio_ad
 
 jal mesa_format
 
+#$a0 - codigo da mesa
+#$a1 - telefone responsavel
+#$a2 - nome responsavel
+addi $a0, $0, 2
+la $a1, telefone_teste
+la $a2, nome_teste
+jal mesa_iniciar
+
 addi $a0, $0, 2
 addi $a1, $0, 3
 jal mesa_ad_item
 
+addi $a0, $0, 2
+addi $a1, $0, 3
+jal mesa_rm_item
 
 addi $a0, $0, 4
 addi $a1, $0, 70

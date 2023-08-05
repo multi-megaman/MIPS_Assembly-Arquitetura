@@ -60,7 +60,7 @@ string_descricao_do_item: .asciiz"Descricao do item: "
 
 
 .text
-.globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio
+.globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio, strcpy
 j end_cardapio
 #=====Criar item no cardápio=====
 cardapio_ad: #Params ($a0 -> codigo do item  | int          2 bytes,
