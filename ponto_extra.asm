@@ -142,14 +142,29 @@ print_number_on_MMIO: #Params ($a0 -> numero a ser impresso | number)
     		beq $t6, $t5, end_convert_number_to_string_loop #se o contador chegar no limite do tamanho, sai do loop
     		bnez $t1, convert_number_to_string_loop   # Repetir ate que o quociente seja zero
 	end_convert_number_to_string_loop:
-		la $a0, buffer_number_to_string
 		#Invertendo os numeros do buffer
-		
-		addi $sp, $sp, -4
-		sw $ra, 0($sp) #Salvando o valor de $ra
-		jal print_string_on_MMIO
-		lw $ra, 0($sp)	#Recuperando o $ra antigo
-		addi $sp, $sp, 4 #voltando a pilha pro lugar original
-	
+		la $t2, buffer_number_to_string #Carregando a posicao inicial do buffer em $t2
+		strLen:                 #Pegando o tamanho total da string
+			lb      $t0, 0($t2)   #Carregando o valor em $t2
+			add     $t2, $t2, 1 #Indo para o proximo valor
+			bne     $t0, $zero, strLen #Caso nao tenhamos chegado em "\0" ainda, continuamos ate $t2 ter o tamanho da string
+
+			la $t5, buffer_number_to_string #$t5 vai conter a posicao inicial do buffer, para compararmos com $t2 que vai percorrer o buffer de tras para frente
+			lui	$t0,0xffff	#ffff0000 (MMIO address)
+			Loop_print_byte_a_byte:
+			sub     $t2, $t2, 1     #Indo para o proximo byte a ser impresso (para tras)
+			#la      $t0, 0($t2)   #carregando o valor 
+			lb      $t3, 0($t2) # 
+			#syscall #Printando o byte em $a0 (que ja estah com a ordem invertida)
+			wait_to_print_byte_on_MMIO:
+				lw	$t1,8($t0)	#control
+				andi	$t1,$t1,0x0001 #verificando se podemos imprimir um caracter na tela 
+				beq	$t1,$0,wait_to_print_byte_on_MMIO
+				#$t3 jah foi carregado com o byte que vamos imprimir
+				sw $t3,12($t0)	#data
+			#bnez $t2, Loop_print_byte_a_byte
+			#Aqui o $a0 ainda contem o endereco inicial que queremos
+			bge $t2, $t5,  Loop_print_byte_a_byte #se $t2 nao tiver chegado em $t5 (inicio da string) entao continuamos 
+			#Aqui o programa acaba
 jr $ra #Return (None)
 fim_mmio:
