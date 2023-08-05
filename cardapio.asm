@@ -255,9 +255,11 @@ cardapio_list: #Params (None)
 	#$t2 -> vai de 1 em 1 até o limite do cardápio (quantidade de códigos), assim assegurando que a ordem com que os itens serão mostrados será a ordem crescente.
 	#$t3 -> faz tudo 1
 	#$t4 -> faz tudo 2
-	addi $sp, $sp, -8
+	addi $sp, $sp, -16
 	sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
 	sw $ra, 4($sp) #Salvando o valor de $ra já que chamaremos mais uma função dentro dessa mesma função
+	sw $a1, 8($sp) #Salvando o valor de $a1
+	sw $a2,12($sp) #Salvando o valor de $a2
 	lhu $t0, ponteiro_cardapio
 	lhu $t1, limite_cardapio
 	addi $t2, $0, 1
@@ -279,22 +281,30 @@ cardapio_list: #Params (None)
 		#Printando o código do item
 		add $t4, $t4, $t3 #E com essa soma chegamos exatamente a posição de memória do item do cardápio
 		lhu $t3, 0($t4) #Carregando o valor do código do item
+		add $a1, $t3, $0 #Salvando $t3 original em $a1
+		add $a2, $t4, $0 #Salvando $t4 original em $a2
 		 print_string(string_codigo_do_item)
 		 macro_print_string_on_MMIO(string_codigo_do_item)
-		 print_int($t3)
-		 macro_print_number_on_MMIO($t3)
+		 print_int($a1)
+		 macro_print_number_on_MMIO($a1)
 		 print_string(line_breaker)
 		 macro_print_string_on_MMIO(line_breaker)
+		 add $t3, $a1, $0 #Recuperando $t3 original
+		 add $t4, $a2, $0 #Recuperando de $4 original
 		 #Printando o preço do item
 		 lbu $t3, tamanho_codigo_item_cardapio #Carregando o tamanho do código do item
 		 add $t4, $t3, $t4 #Somando o local da memória com o tamanho do código, fazendo com que $t4 esteja agora no preço do item
 		 lhu $t3, 0($t4) #Carregando o valor do preço do item
+		add $a1, $t3, $0 #Salvando $t3 original em $a1
+		add $a2, $t4, $0 #Salvando $t4 original em $a2
 		 print_string(string_valor_do_item)
 		 macro_print_string_on_MMIO(string_valor_do_item)
-		 print_int($t3)
-		 macro_print_number_on_MMIO($t3)
+		 print_int($a1)
+		 macro_print_number_on_MMIO($a1)
 		 print_string(line_breaker)
 		 macro_print_string_on_MMIO(line_breaker)
+		 add $t3, $a1, $0
+		 add $t4, $a2, $0
 		 #Printando a descrição do item
 		 lbu $t3, tamanho_preco_item_cardapio #Carregando o tamanho do preço do item
 		 add $t4, $t3, $t4 #Somando o local da memória com o tamanho do preço, fazendo com que $t4 esteja agora na descrição
@@ -322,7 +332,9 @@ cardapio_list: #Params (None)
 	fim_cardapio_list:
 	lw $a0, 0($sp)	#Recuperando o $a0 antigo
 	lw $ra, 4($sp) #Recuperando o $ra original para poder sair dessa função
-	addi $sp, $sp, 8 #voltando a pilha pro lugar original
+	lw $a1, 8($sp) #Recuperando o $a1 original
+	lw $a2, 12($sp) #Recuperando o $a2 original
+	addi $sp, $sp, 16 #voltando a pilha pro lugar original
 
 jr $ra #Return (None)
 

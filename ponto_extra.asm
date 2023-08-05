@@ -6,7 +6,8 @@ NEW_LINE_KEY: .word 0x0A #Valor do caracter "\n" (ascii)
 USER_COMMAND: .space 124 #Serah aqui que os comandos que o usuario digitar serao guardados byte a byte.
 tamanho_user_command: .word 124 #Tamanho
 teste_line_breaker: .asciiz"\n"
-white_space_3: .space 14
+buffer_number_to_string: .space 15
+tamanho_buffer_number_to_string: .byte 15
 #Macros
 .macro print_string_by_address(%string_register)
 	addi $sp, $sp, -4
@@ -122,12 +123,33 @@ jr $ra #Return (None)
 
 #===== Funcao que imprime no display do MMIO um numero=====
 print_number_on_MMIO: #Params ($a0 -> numero a ser impresso | number)
-	add $t2, $0, $a0 #Copiando o numero para $t2
-	lui	$t0,0xffff	#ffff0000
-	wait_to_print_number_on_MMIO:
-		lw	$t1,8($t0)	#control
-		andi	$t1,$t1,0x0001 #verificando se podemos imprimir um caracter na tela 
-		beq	$t1,$0,wait_to_print_number_on_MMIO
-		sw    $t2,12($t0)	#data
+
+	#Converter de inteiro para string
+	add $t1, $a0, $0 #passando $a0 para $t1
+	la $t3, buffer_number_to_string
+	lb $t5, tamanho_buffer_number_to_string
+	addi $t5, $t5, -1 #subtrair 1 do total, ja que o ultimo byte vai ser o "\0"
+	addi $t6, $0, 1 #contador para saber se ja chegamos ao final da string
+	addi $t7, $0, 10 #10 eh a base que nos queremos transformar nosso numero
+	convert_number_to_string_loop:
+    		div $t1, $t7         # Dividir $t1 por 10
+    		mflo $t1             # $t1 = quociente
+    		mfhi $t4             # $t4 = resto
+    		addi $t4, $t4, '0'   # Converter o digito para um caractere ASCII
+    		sb $t4, 0($t3)       # Armazenar o caractere na string
+    		addi $t3, $t3, 1     # Mover para o proximo caractere na string
+    		addi $t6, $t6, 1 	#incrementando o contador
+    		beq $t6, $t5, end_convert_number_to_string_loop #se o contador chegar no limite do tamanho, sai do loop
+    		bnez $t1, convert_number_to_string_loop   # Repetir ate que o quociente seja zero
+	end_convert_number_to_string_loop:
+		la $a0, buffer_number_to_string
+		#Invertendo os numeros do buffer
+		
+		addi $sp, $sp, -4
+		sw $ra, 0($sp) #Salvando o valor de $ra
+		jal print_string_on_MMIO
+		lw $ra, 0($sp)	#Recuperando o $ra antigo
+		addi $sp, $sp, 4 #voltando a pilha pro lugar original
+	
 jr $ra #Return (None)
 fim_mmio:
