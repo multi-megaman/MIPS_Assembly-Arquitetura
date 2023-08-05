@@ -41,8 +41,10 @@ falha_codigo_mesa_invalido: .asciiz "Falha: mesa inexistente\n"
 falha_codigo_cardapio_invalido: .asciiz "Falha: codigo cardapio invalido\n"
 falha_mesa_desocupada: .asciiz "Falha: mesa desocupada\n"
 falha_mesa_ocupada: .asciiz "Falha: mesa ocupada\n"
+falha_mesa_fechar: .asciiz "Falha: saldo devedor ainda nao quitado. Valor restante: R$ "
 #sucessos==
 sucesso_pagamento_mesa: .asciiz "Pagamento realizado com sucesso\n"
+sucesso_mesa_fechar: .asciiz "Mesa fechada com sucesso\n"
 #macros
 .macro print_string(%string)
 	addi $sp, $sp, -4
@@ -55,13 +57,25 @@ sucesso_pagamento_mesa: .asciiz "Pagamento realizado com sucesso\n"
 	lw $a0, 0($sp)	#Recuperando o $a0 antigo
 	addi $sp, $sp, 4 #voltando a pilha pro lugar original
 .end_macro
+
+.macro print_int(%int)
+	addi $sp, $sp, -4
+	sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
+	
+	addi $v0, $0, 1
+	add $a0, $0, %int
+	syscall
+	
+	lw $a0, 0($sp)	#Recuperando o $a0 antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
+.end_macro
 tamanho_ate_o_registro_pedidos: .byte 76 # tamanho para o registro de pedidos
 tamanho_registro_pedidos: .byte 80 # tamanho para o registro de pedidos
 tamanho_ate_o_nome_responsavel: .byte 4 # tamanho para o registro de nome responsavel
 tamanho_ate_o_telefone_responsavel: .byte 65 # tamanho para o registro de telefone responsavel
 .text
 
-.globl  mesa_iniciar, mesa_format, mesa_ad_item, mesa_rm_item, mesa_pagar
+.globl  mesa_iniciar, mesa_format, mesa_ad_item, mesa_rm_item, mesa_pagar, mesa_fechar
 
 j fim_mesas
 
@@ -78,8 +92,7 @@ mesa_format: #Params (None)
     li $t4, 1 #codigo de cada mesa, come�a em 1 e vai at� $t1 (limite_mesas)
     lbu $t5, tamanho_status_mesa
     sub $t6, $t3, $t2 #tamanho total da mesa - tamanho do codigo da mesa
-    sub $t6, $t6, $t5 # tamanho total da mesa - tamanho do codigo da mesa - tamanho da flag da mesa = quantidade de bytes restantes, onde todos esses bytes vao ser zerados
-    
+    #sub $t6, $t6, $t5 # tamanho total da mesa - tamanho do codigo da mesa - tamanho da flag da mesa = quantidade de bytes restantes, onde todos esses bytes vao ser zerados
     #Interando em cada mesa
     loop_mesas_format:
         bgt $t4, $t1,end_mesa_format # se codigo da mesa > $t1 (limite_mesa), sai do loop
@@ -87,8 +100,8 @@ mesa_format: #Params (None)
         add $t0, $t0, $t2 #indo para a flag da mesa
         sh $0, 0($t0) #coloca mesa desocupada
         addi $t4, $t4, 1 # vai para o proximo codigo da mesa
-        add $t0, $t0, $t5 #indo para o registro de pedidos
-
+	#add $t0, $t0, $t5 #indo para o registro de pedidos
+	
         add $t7, $t6, $0 #tamanho restante total para percorrer array, esse valor vai ser reduzido de 
         clear_register_de_pedidos:
             addi $t0, $t0, 1 #indo para o proximo byte
@@ -319,7 +332,7 @@ la $t0, mesas #$t0 comeca no inicio do gerenciador de mesas e vai percorrendo de
 	lbu $t8, tamanho_registro_pedidos #tamanho maximo registro de pedidos
 	add $t0, $t0, $t6 # soma o inicio com a distancia
 	add $t8, $t8, $t0 #local final do registro pedidos (e inico do valor total)
-	add $t1, $0, $a1 #salvando valor do produto em #t9
+	add $t1, $0, $a1 #salvando valor do pagamento em $t1
 	lhu $t2, ($t8) #obtem valor total ja existente
 	sub $t1, $t2, $t1 # remove o valor do produto ao preco existente
 	sh $t1, 0($t8) #substitui valor total (ler valor do produto no t9)
@@ -327,6 +340,62 @@ la $t0, mesas #$t0 comeca no inicio do gerenciador de mesas e vai percorrendo de
 j fim_mesa_pagar
 fim_mesa_pagar:
 jr $ra
+
+#$a0 = codigo mesa
+mesa_fechar:
+#validacoes
+addi $sp, $sp, -4 #Reservando espa�o na mem�ria para salvar o $ra
+	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
+	jal checar_ocupacao_mesa #recebendo $a0 como entrada (numero da mesa) para ver se ele j� existe.
+	lw $ra, 0($sp)	#Recupenrando o $ra antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
+	
+	beq $v1, 0, mesa_desocupada_error
+	beq $v0, 1, fim_mesa_rm_item
+	#inicio
+	la $t0, mesas #$t0 comeca no inicio do gerenciador de mesas e vai percorrendo de mesa em mesa
+	lbu $t4, tamanho_mesa # obtem o tamanho de uma mesa
+	subi $t1, $a0, 1 #remove 1 do numero da mesa para obter o indice
+	multu $t1,$t4 	#Calculando o offset para se chegar no proximo espaco de memoria livre reservado para uma mesa (160 bytes).
+	mflo $t5 	#$t5 recebe o resultado da multiplicacao anterior
+	add $t0, $t0, $t5 #move $t0 para o local da mesa
+	move $k0, $t0
+	lbu $t6, tamanho_ate_o_registro_pedidos #distancia ate o registro de pedidos
+	lbu $t8, tamanho_registro_pedidos #tamanho maximo registro de pedidos
+	add $t0, $t0, $t6 # soma o inicio com a distancia
+	add $t8, $t8, $t0 #local final do registro pedidos (e inico do valor total)
+	lhu $t9, ($t8) #obtem valor total ja existente
+	ble $t9, $0, sucesso_mesa_pagar
+	print_string(falha_mesa_fechar)
+	print_int($t9) #FORMATAR PARA TER O PADRAO DE XXXXX,XX
+	j fim_mesa_fechar
+	sucesso_mesa_pagar:
+	#APAGAR RESTANTE DAS INFORMACOES
+	lhu $t1, limite_mesas #$t1 define a quantidade m�xima de mesas (15)
+    	lbu $t2, tamanho_codigo_mesa 
+    	lhu $t3, tamanho_mesa
+    	li $t4, 1 #codigo de cada mesa, come�a em 1 e vai at� $t1 (limite_mesas)
+    	lbu $t5, tamanho_status_mesa
+    	sub $t6, $t3, $t2 #tamanho total da mesa - tamanho do codigo da mesa
+    	sub $t6, $t6, $t5 # tamanho total da mesa - tamanho do codigo da mesa - tamanho da flag da mesa = quantidade de bytes restantes, onde todos esses bytes vao ser zerados
+    
+    	#Interando em cada mesa
+        add $t0, $k0, $t2 #indo para a flag da mesa
+        sh $0, 0($t0) #coloca mesa desocupada
+        addi $t0, $t0, 1
+        sb $0, 0($t0) #Zerando os dois bytes da flag
+        add $t7, $t6, $0 #tamanho restante total para percorrer array, esse valor vai ser reduzido de 
+        clear_fechar:
+            addi $t0, $t0, 1 #indo para o proximo byte
+            sb $0, 0($t0) #salvando zero no byte indicado
+            sub $t7, $t7, 1
+            bgtu $t7, $0, clear_fechar #LIMPANDO UM POUCO DEMAIS!!!
+	print_string(sucesso_mesa_fechar)
+
+j fim_mesa_fechar
+fim_mesa_fechar:
+jr $ra
+
 j fim_mesas #Return (None)
 #============ Funcoes Extras ===============
 
