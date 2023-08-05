@@ -34,6 +34,18 @@ tamanho_buffer_number_to_string: .byte 15
 	addi $sp, $sp, 4 #voltando a pilha pro lugar original
 .end_macro
 
+.macro macro_print_string_on_MMIO(%string)
+	addi $sp, $sp, -8
+	sw $a0, 0($sp) #Salvando o valor de $a0
+	sw $ra, 4($sp) #Salvando o valor de $ra para poder voltar a funcao
+	la $a0, %string
+	jal print_string_on_MMIO
+	lw $a0, 0($sp)	#Recuperando o $a0 antigo
+	lw $ra, 4($sp) #Recuperando o $a0 antigo
+	addi $sp, $sp, 8 #voltando a pilha pro lugar original
+.end_macro
+
+
 .text
 
 .globl print_string_on_MMIO, print_number_on_MMIO
@@ -73,18 +85,27 @@ usuario_chegou_ao_limite_da_string:
 	sb $0, 2($s2) #Colocando "\0" no ultimo byte reservado para o USER_COMMAND
 	j new_line
 	
+ # Se o caractere for "backspace", apaga o ultimo caractere do USER_COMMAND e faz uma gabiarra no display (eh o jeito :/ )	
 backspace:
-  # Se o caractere for "backspace", apaga o ultimo caractere do display
-  # Para fazer isso, escrevemos um caractere vazio no endereço de saída MMIO
-  li $s3, ' '        # Armazena o caractere de espaço vazio em $s3
-  sb $s3,12($s0)     # Escreve o caractere vazio no endereço de saída MMIO
-  sb $s0,12($s0)     # Escreve novamente o caractere lido (o que estava antes do backspace) no endereço de saida MMIO
-  j waitloop        # Continua lendo caracteres
+
+ 	#Tirando o ultimo caracter do USER_COMMAND
+  	la $t0, USER_COMMAND #Carregando o USER_COMMAND
+  	get_user_command_string_len:                 #Pegando o tamanho total da string
+			lb      $t2, 0($t0)   #Carregando o valor em $t2
+			add     $t0, $t0, 1 #Indo para o proximo valor
+			bne     $t2, $zero, get_user_command_string_len #Caso nao tenhamos chegado em "\0" ainda, continuamos ate $t2 ter o tamanho da string
+	sb $0, -2($t0)  #Salvando o "\0" na ultima posicao do USER_COMMAND (apagando o ultimo byte)
+	addi $s2, $s2, -1 #Voltando uma posicao em $s2 para que ele esteja apontando para o novo ultimo byte
+  	#Fazendo o print na tela do comando atualizado (sem o ultimo caracter)
+  	la $a0, USER_COMMAND
+  	macro_print_string_on_MMIO(teste_line_breaker) #"\n"
+  	macro_print_string_on_MMIO(USER_COMMAND) #Printando o codigo do usuario novamente la no display do MMIO, mas dessa vez sem o ultimo caracter
+  	j waitloop        # Continua lendo caracteres
 
 #!!!!!!!!!!!!!!!!!===========Eh aqui que o comando eh enviado para o parser ===========!!!!!!!!!!!!!!!!!
 new_line:
 	
-	sw $t8,12($s0)	#Salvando o "\n" no display
+	sw $t8,12($s0)	#Salvando o "\n" no display (so no display, nao vai para o comando)
 	print_string(USER_COMMAND)
 	print_string(teste_line_breaker)
 	la $a0, USER_COMMAND
@@ -162,6 +183,7 @@ print_number_on_MMIO: #Params ($a0 -> numero a ser impresso | number)
 				beq	$t1,$0,wait_to_print_byte_on_MMIO
 				#$t3 jah foi carregado com o byte que vamos imprimir
 				sw $t3,12($t0)	#data
+				sb $0, 0($t2) # Ao mesmo tempo em que escrevemos o valor na tela, nos vamos resetando o buffer para zero
 			#bnez $t2, Loop_print_byte_a_byte
 			#Aqui o $a0 ainda contem o endereco inicial que queremos
 			bge $t2, $t5,  Loop_print_byte_a_byte #se $t2 nao tiver chegado em $t5 (inicio da string) entao continuamos 

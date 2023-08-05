@@ -269,6 +269,9 @@ cardapio_list: #Params (None)
 	#macro_print_string_on_MMIO(line_breaker)
 	loop_cardapio_list:
 		bgtu $t2, $t1, fim_cardapio_list  #se $t2 ultrapassar o limite do cardapio, indica que já esgotamos todos os possiveis prints de itens
+		addi $sp, $sp, -8 #armazenando mais espaco para guardar o $t2
+		sw $t2, 0($sp) #Salvando o valor de $t2 
+		sw $t1, 4($sp) #Salvando o valor de $t1 
 		add $a0, $0, $t2 #copiando o atual valor de $t2 para servir de entrada para a função de checagem
 		jal checar_existencia_de_codigo #Params($a0 -> codigo do item | int)
 		beq $v0, 0, nao_fazer_print_cardapio_list #se a checagem tiver um retorno negativo (0), então não vamos printar do elemento
@@ -279,6 +282,7 @@ cardapio_list: #Params (None)
 		mflo $t3 #$t3 armazena o offset necessário para se chegar ao item
 		la $t4, cardapio
 		#Printando o código do item
+		
 		add $t4, $t4, $t3 #E com essa soma chegamos exatamente a posição de memória do item do cardápio
 		lhu $t3, 0($t4) #Carregando o valor do código do item
 		add $a1, $t3, $0 #Salvando $t3 original em $a1
@@ -323,6 +327,9 @@ cardapio_list: #Params (None)
 		 macro_print_string_on_MMIO(line_breaker)
 		 
 		nao_fazer_print_cardapio_list:	
+			lw $t2, 0($sp) #Pegando $t2 de volta para fazer as devidas
+			lw $t1, 4($sp) #Pegando $t1 de volta
+			addi $sp, $sp, 8 #Voltando a pilha
 			addi $t2, $t2, 1 #incrementando o valor de $t2 até chegar no limite do cardápio ($t1)
 			j loop_cardapio_list
 	 aviso_cardapio_list:
