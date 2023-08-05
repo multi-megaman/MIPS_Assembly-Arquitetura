@@ -41,6 +41,8 @@ falha_codigo_mesa_invalido: .asciiz "Falha: mesa inexistente\n"
 falha_codigo_cardapio_invalido: .asciiz "Falha: codigo cardapio invalido\n"
 falha_mesa_desocupada: .asciiz "Falha: mesa desocupada\n"
 falha_mesa_ocupada: .asciiz "Falha: mesa ocupada\n"
+#sucessos==
+sucesso_pagamento_mesa: .asciiz "Pagamento realizado com sucesso\n"
 #macros
 .macro print_string(%string)
 	addi $sp, $sp, -4
@@ -59,7 +61,7 @@ tamanho_ate_o_nome_responsavel: .byte 4 # tamanho para o registro de nome respon
 tamanho_ate_o_telefone_responsavel: .byte 65 # tamanho para o registro de telefone responsavel
 .text
 
-.globl  mesa_iniciar, mesa_format, mesa_ad_item, mesa_rm_item
+.globl  mesa_iniciar, mesa_format, mesa_ad_item, mesa_rm_item, mesa_pagar
 
 j fim_mesas
 
@@ -293,6 +295,38 @@ lhu $t0, limite_mesas
 	remove_item_nao_existe:
 	fim_mesa_rm_item:
 	jr $ra
+	
+#a0 = codigo da mesa
+#a1 = string com valor a ser pago em centavos no padrao XXXXXX
+mesa_pagar:
+#validacoes
+addi $sp, $sp, -4 #Reservando espa�o na mem�ria para salvar o $ra
+	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
+	jal checar_ocupacao_mesa #recebendo $a0 como entrada (numero da mesa) para ver se ele j� existe.
+	lw $ra, 0($sp)	#Recupenrando o $ra antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
+	
+	beq $v1, 0, mesa_desocupada_error
+	beq $v0, 1, fim_mesa_rm_item
+#inicio
+la $t0, mesas #$t0 comeca no inicio do gerenciador de mesas e vai percorrendo de mesa em mesa
+	lbu $t4, tamanho_mesa # obtem o tamanho de uma mesa
+	subi $t1, $a0, 1 #remove 1 do numero da mesa para obter o indice
+	multu $t1,$t4 	#Calculando o offset para se chegar no proximo espaco de memoria livre reservado para uma mesa (160 bytes).
+	mflo $t5 	#$t5 recebe o resultado da multiplicacao anterior
+	add $t0, $t0, $t5 #move $t0 para o local da mesa
+	lbu $t6, tamanho_ate_o_registro_pedidos #distancia ate o registro de pedidos
+	lbu $t8, tamanho_registro_pedidos #tamanho maximo registro de pedidos
+	add $t0, $t0, $t6 # soma o inicio com a distancia
+	add $t8, $t8, $t0 #local final do registro pedidos (e inico do valor total)
+	add $t1, $0, $a1 #salvando valor do produto em #t9
+	lhu $t2, ($t8) #obtem valor total ja existente
+	sub $t1, $t2, $t1 # remove o valor do produto ao preco existente
+	sh $t1, 0($t8) #substitui valor total (ler valor do produto no t9)
+	print_string(sucesso_pagamento_mesa)
+j fim_mesa_pagar
+fim_mesa_pagar:
+jr $ra
 j fim_mesas #Return (None)
 #============ Funcoes Extras ===============
 

@@ -85,6 +85,10 @@ addi $a1, $0, 3
 jal mesa_ad_item
 
 addi $a0, $0, 2
+addi $a1, $0, 1500
+jal mesa_pagar
+
+addi $a0, $0, 2
 addi $a1, $0, 3
 jal mesa_rm_item
 
