@@ -41,10 +41,17 @@ falha_codigo_mesa_invalido: .asciiz "Falha: mesa inexistente\n"
 falha_codigo_cardapio_invalido: .asciiz "Falha: codigo cardapio invalido\n"
 falha_mesa_desocupada: .asciiz "Falha: mesa desocupada\n"
 falha_mesa_ocupada: .asciiz "Falha: mesa ocupada\n"
-falha_mesa_fechar: .asciiz "Falha: saldo devedor ainda nao quitado. Valor restante: R$ "
+falha_mesa_fechar: .asciiz "Falha: saldo devedor ainda não quitado. Valor restante: R$ "
 #sucessos==
 sucesso_pagamento_mesa: .asciiz "Pagamento realizado com sucesso\n"
 sucesso_mesa_fechar: .asciiz "Mesa fechada com sucesso\n"
+#info
+line_breaker: .asciiz"\n"
+mesa_parcial_string: .asciiz "Relatorio da mesa de numero "
+codigo_produto: .asciiz "Codigo produto: "
+quantidade_produto: .asciiz "Quantidade produto: "
+valor_a_ser_pago: .asciiz "Valor a ser pago: "
+valor_pago: .asciiz "Valor ja pago: "
 #macros
 .macro print_string(%string)
 	addi $sp, $sp, -4
@@ -75,7 +82,7 @@ tamanho_ate_o_nome_responsavel: .byte 4 # tamanho para o registro de nome respon
 tamanho_ate_o_telefone_responsavel: .byte 65 # tamanho para o registro de telefone responsavel
 .text
 
-.globl  mesa_iniciar, mesa_format, mesa_ad_item, mesa_rm_item, mesa_pagar, mesa_fechar
+.globl  mesa_iniciar, mesa_format, mesa_ad_item, mesa_rm_item, mesa_pagar, mesa_fechar, mesa_parcial
 
 j fim_mesas
 
@@ -322,7 +329,7 @@ addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
 	beq $v1, 0, mesa_desocupada_error
 	beq $v0, 1, fim_mesa_rm_item
 #inicio
-la $t0, mesas #$t0 comeca no inicio do gerenciador de mesas e vai percorrendo de mesa em mesa
+	la $t0, mesas #$t0 comeca no inicio do gerenciador de mesas e vai percorrendo de mesa em mesa
 	lbu $t4, tamanho_mesa # obtem o tamanho de uma mesa
 	subi $t1, $a0, 1 #remove 1 do numero da mesa para obter o indice
 	multu $t1,$t4 	#Calculando o offset para se chegar no proximo espaco de memoria livre reservado para uma mesa (160 bytes).
@@ -344,7 +351,7 @@ jr $ra
 #$a0 = codigo mesa
 mesa_fechar:
 #validacoes
-addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
+	addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
 	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
 	jal checar_ocupacao_mesa #recebendo $a0 como entrada (numero da mesa) para ver se ele jï¿½ existe.
 	lw $ra, 0($sp)	#Recupenrando o $ra antigo
@@ -395,6 +402,66 @@ addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
 j fim_mesa_fechar
 fim_mesa_fechar:
 jr $ra
+
+#a0 - Codigo da mesa
+mesa_parcial:
+#validacoes
+	addi $sp, $sp, -4 #Reservando espaï¿½o na memï¿½ria para salvar o $ra
+	sw $ra, 0($sp) #Salvando o valor de $ra para poder voltar a funcao
+	jal checar_ocupacao_mesa #recebendo $a0 como entrada (numero da mesa) para ver se ele jï¿½ existe.
+	lw $ra, 0($sp)	#Recupenrando o $ra antigo
+	addi $sp, $sp, 4 #voltando a pilha pro lugar original
+	
+	beq $v1, 0, mesa_desocupada_error
+	beq $v0, 1, fim_mesa_rm_item
+	#inicio
+	print_string(mesa_parcial_string)
+	print_int($a0)
+	print_string(line_breaker)
+	
+	la $t0, mesas #$t0 comeca no inicio do gerenciador de mesas e vai percorrendo de mesa em mesa
+	lbu $t4, tamanho_mesa # obtem o tamanho de uma mesa
+	subi $t1, $a0, 1 #remove 1 do numero da mesa para obter o indice
+	multu $t1,$t4 	#Calculando o offset para se chegar no proximo espaco de memoria livre reservado para uma mesa (160 bytes).
+	mflo $t5 	#$t5 recebe o resultado da multiplicacao anterior
+	add $t0, $t0, $t5 #move $t0 para o local da mesa
+	
+	lbu $t6, tamanho_ate_o_registro_pedidos #distancia ate o registro de pedidos
+	lbu $t8, tamanho_registro_pedidos #tamanho maximo registro de pedidos
+	add $t0, $t0, $t6 # soma o inicio com a distancia
+	add $t8, $t8, $t0 #local final do registro pedidos (e inico do valor total)
+	
+	
+	
+	search_space_parcial:
+	lhu $t7, ($t0) #le se existe um codigo de produto
+	beq $t7, $0, imprimir_valores #se valor for zero, nao tem pedido
+	print_string(codigo_produto)
+	print_int($t7) #imprimir codigo do produto ($t7)
+	print_string(line_breaker)
+	lhu $t7, 2($t0) #obtem a quantidade atual de produtos existentes
+	print_string(quantidade_produto)
+	print_int($t7) #imprimir quantidade ($t7)
+	print_string(line_breaker)
+	
+	bge $t0, $t8, imprimir_valores #verificar se ja se passou 20 vagas
+	addi $t0, $t0, 4 #vai para a proxima casa de registro
+	j search_space_parcial
+	
+	
+	
+	
+	
+	imprimir_valores:
+	#imprime valor a pagar e valor pago
+	lhu $t9, ($t8) #obtem valor total ja existente
+	print_string(valor_a_ser_pago)
+	print_int($t9) #imprimir valor a pagar ($t9)
+	print_string(line_breaker)
+	j fim_mesa_parcial
+	fim_mesa_parcial:
+	jr $ra
+
 
 j fim_mesas #Return (None)
 #============ Funcoes Extras ===============
