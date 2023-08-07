@@ -52,7 +52,7 @@ white_space_mmio: .space 13
 
 .globl print_string_on_MMIO, print_number_on_MMIO
 macro_print_string_on_MMIO(banner) #"Printando o banner"
-jal mesa_format
+jal mesa_format #Iniciar as mesas, esvaziando elas
 #j fim_mmio
 	lui	$s0,0xffff	#ffff0000
 	la $s2, USER_COMMAND #$s2 vai ser responsavel por escrever byte a byte em USER_COMMAND

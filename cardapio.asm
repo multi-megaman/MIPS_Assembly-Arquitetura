@@ -5,12 +5,9 @@
 	#descricao (letras) -> 0-60         =  60*8 = 480 bits 			   arredondando para bytes = 480bits unsigned
 #Bits totais para um item do card�pio = 16 + 16 + 480 = 512 bits -> 64 bytes
 
-#Espacos totais para os 20 itens do card�pio 64x20 = 1.280
-cardapio: .space 1280					    #bytes -> quantidade em bytes reservados para todos os possiveis 20 itens do card�pio
 #Valores extras para o funcionamento do cardapio
 tamanho_total_cardapio: .word 1280		  # int -> tamanho total do card�pio em bytes | atualmente o fim do cardapio fica no address 1376 (s� para refer�ncia)
 limite_cardapio: .half 20   		                   #int -> indica qual o limite de itens do card�pio
-ponteiro_cardapio: .half 0 		                   #int -> Sempre vai estar apontando para a proxima posi��o livre do cardapio. Quando chega em limite_cardapio, indica que a proxima posi��o livre est� fora do espa�o reservado.
 tamanho_codigo_item_cardapio: .byte 2          #int -> indica o tamanho em bytes reservados para o c�digo do card�pio
 tamanho_preco_item_cardapio: .byte 2 	  #int -> indica o tamanho em bytes reservados para o c�digo do card�pio
 tamanho_descricao_item_cardapio: .byte 60 #int -> indica o tamanho em bytes reservados para a descri��o do item do card�pio (NAO UTILIZADO :D)
@@ -34,6 +31,9 @@ string_valor_do_item: .asciiz"Valor do item: "
 string_descricao_do_item: .asciiz"Descricao do item: "
 
 
+ponteiro_cardapio: .half 0 		                   #int -> Sempre vai estar apontando para a proxima posi��o livre do cardapio. Quando chega em limite_cardapio, indica que a proxima posi��o livre est� fora do espa�o reservado.
+#Espacos totais para os 20 itens do card�pio 64x20 = 1.280
+cardapio: .space 1280					    #bytes -> quantidade em bytes reservados para todos os possiveis 20 itens do card�pio
 
 #Macros
 .macro print_string(%string)
@@ -93,7 +93,7 @@ string_descricao_do_item: .asciiz"Descricao do item: "
 	addi $sp, $sp, 8 #voltando a pilha pro lugar original
 .end_macro
 .text
-.globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio, strcpy
+.globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio, strcpy, ponteiro_cardapio
 j end_cardapio
 #=====Criar item no card�pio=====
 cardapio_ad: #Params ($a0 -> codigo do item  | int          2 bytes,
