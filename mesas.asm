@@ -82,7 +82,7 @@ tamanho_ate_o_nome_responsavel: .byte 4 # tamanho para o registro de nome respon
 tamanho_ate_o_telefone_responsavel: .byte 65 # tamanho para o registro de telefone responsavel
 .text
 
-.globl  mesa_iniciar, mesa_format, mesa_ad_item, mesa_rm_item, mesa_pagar, mesa_fechar, mesa_parcial
+.globl  mesa_iniciar, mesa_format, mesa_ad_item, mesa_rm_item, mesa_pagar, mesa_fechar, mesa_parcial, mesas
 
 j fim_mesas
 
