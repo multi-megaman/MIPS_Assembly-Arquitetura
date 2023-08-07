@@ -1,10 +1,10 @@
 .data
 #testes
 string_usuario: .space 59
-input_string_usuario: .asciiz"Digite um coment�rio para o item por favor: "
-#white_space: .space 24 #S� para o card�pio come�ar em um lugar mais bonitinho no visualizador do MARS
-
-
+input_string_usuario: .asciiz"Digite um comentario para o item por favor: "
+white_space: .space 3 #Soh para o cardapio comecar em um lugar mais bonitinho no visualizador do MARS
+telefone_teste:.asciiz"08198765432"
+nome_teste:.asciiz"Jose Silva"
 .macro print_string(%string)
 	addi $sp, $sp, -4
 	sw $a0, 0($sp) #Salvando o valor de $a0 para poder voltar a funcao
@@ -33,26 +33,18 @@ string_teste_parse: .asciiz "formatar" #vai servir para testar o parse da string
 .text
 .globl zona_testes_parse_string
 main:
-la $a0, string_teste_parse
-j parse_string
+#inicando uma mesa
+    	# $a0 - C�digo da mesa (01 a 15)
+    	# $a1 - Telefone do respons�vel (string com 11 caracteres)
+    	# $a2 - Nome do respons�vel (string com at� 60 caracteres)
+    	#addi $a0, $0, 8
+    	#la $a1, telefone_teste_usuario
+	#la $a2, nome_teste_usuario
+#jal mesa_iniciar
 
-zona_testes_parse_string:
-
-li $v0, 1
-syscall
-
-add $a0, $a1, $0
-li $v0, 1
-syscall
-
-add $a0, $a1, $0
-
-
-
-j super_end
 
 #!!!!!!!!!!!!!! INICIO DA ZONA DE TESTES !!!!!!!!!!!!!!!!!!!!!!!!!
-#---�rea de testes para pegar a descri��o do usu�rio, essa parte ser� substituida com o CLI posterior, mas por agora para se adicionar um item no card�pio, � preciso ler essa string
+#---area de testes para pegar a descricao do usuario, essa parte serah substituida com o CLI posterior, mas por agora para se adicionar um item no cardapio, � preciso ler essa string
 addi $v0, $0, 4 #Printar String
 la $a0, input_string_usuario
 syscall
@@ -65,6 +57,7 @@ add $a2, $0, $a0 #armazena o valor lido em $a2 (string do usuario)
 #OBS: A descri��o dos itens por enquanto � a mesma para todos eles, j� que estamos pegando apenas uma �nica string para isso
 
 #---Valores de teste referentes ao id do item ($a0) e ao pre�o dele ($a1)
+
 addi $a0, $0, 1
 addi $a1, $0, 1000
 jal cardapio_ad
@@ -78,6 +71,34 @@ jal cardapio_ad
 addi $a0, $0, 3
 addi $a1, $0, 3000
 jal cardapio_ad
+
+jal mesa_format
+
+#$a0 - codigo da mesa
+#$a1 - telefone responsavel
+#$a2 - nome responsavel
+addi $a0, $0, 2
+la $a1, telefone_teste
+la $a2, nome_teste
+jal mesa_iniciar
+
+addi $a0, $0, 2
+addi $a1, $0, 3
+jal mesa_ad_item
+
+addi $a0, $0, 2
+addi $a1, $0, 1500
+jal mesa_pagar
+
+addi $a0, $0, 2
+jal mesa_parcial
+
+addi $a0, $0, 2
+jal mesa_fechar
+
+addi $a0, $0, 2
+addi $a1, $0, 3
+jal mesa_rm_item
 
 addi $a0, $0, 4
 addi $a1, $0, 70
@@ -158,11 +179,11 @@ jal cardapio_ad # Erro: C�digo inv�lido
 
 #Remover item
 addi $a0, $0, 21
-jal cardapio_rm #Erro: c�digo inv�lido
+jal cardapio_rm #Erro: codigo inv�lido
 
-#Descomentar para testar a remo��o de um item n�o cadastrado. Precisa comentar o c�digo de adi�ao do item de id 20
+#Descomentar para testar a remo��o de um item n�o cadastrado. Precisa comentar o codigo de adi�ao do item de id 20
 #addi $a0, $0, 20
-#jal cardapio_rm #Erro: c�digo n�o cadastrado
+#jal cardapio_rm #Erro: codigo n�o cadastrado
 
 addi $a0, $0, 20 #testando a remo��o do ultimo item
 jal cardapio_rm #Sucesso
@@ -197,29 +218,28 @@ addi $a0, $0, 1 #testando a adi��o de um item ap�s uma remo��o
 addi $a1, $0, 68356
 jal cardapio_ad #Sucesso
 
-#Checando a existencia de um c�digo no card�pio
+#Checando a existencia de um codigo no cardapio
 addi $a0, $0, 3
 addi $a1, $0, 1600
-jal checar_existencia_de_codigo #Retorna 1 (c�digo encontrado)
+jal checar_existencia_de_codigo #Retorna 1 (codigo encontrado)
 
-#Checando o print do card�pio
+#Checando o print do cardapio
 jal cardapio_list #Sucesso
 
-#Chegando as informa��es de um item do card�pio
+#Chegando as informacoes de um item do cardapio
 addi $a0, $0, 3
-jal retornar_infos_item_cardapio	
+jal retornar_infos_item_cardapio	 #Retorna o valor e a descricao do item
 add $t0, $v0, $0
-print_int($t0)
-print_string($v1)
+print_int($t0)  #printa o valor
+print_string($v1) #printa a descricao
 
 
-#Teste da formata��o do card�pio
+#Teste da formata��o do cardapio
 #jal cardapio_format
 
-
-
+#Teste das mesas
 
 #Fun��es============================================================================================================================================================
-super_end:
+
 	
 	

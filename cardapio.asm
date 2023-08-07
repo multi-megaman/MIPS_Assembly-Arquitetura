@@ -13,7 +13,7 @@ limite_cardapio: .half 20   		                   #int -> indica qual o limite de
 ponteiro_cardapio: .half 0 		                   #int -> Sempre vai estar apontando para a proxima posição livre do cardapio. Quando chega em limite_cardapio, indica que a proxima posição livre está fora do espaço reservado.
 tamanho_codigo_item_cardapio: .byte 2          #int -> indica o tamanho em bytes reservados para o código do cardápio
 tamanho_preco_item_cardapio: .byte 2 	  #int -> indica o tamanho em bytes reservados para o código do cardápio
-tamanho_descricao_item_cardapio: .byte 60 #int -> indica o tamanho em bytes reservados para a descrição do item do cardápio 
+tamanho_descricao_item_cardapio: .byte 60 #int -> indica o tamanho em bytes reservados para a descrição do item do cardápio (NAO UTILIZADO :D)
 tamanho_total_item_cardapio: .byte 64        #int -> indica o tamanho em bytes reservados para um item do cardápio
 
 #textos reservados
@@ -91,7 +91,7 @@ string_descricao_do_item: .asciiz"Descricao do item: "
 	addi $sp, $sp, 8 #voltando a pilha pro lugar original
 .end_macro
 .text
-.globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio
+.globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio, strcpy
 j end_cardapio
 #=====Criar item no cardápio=====
 cardapio_ad: #Params ($a0 -> codigo do item  | int          2 bytes,
