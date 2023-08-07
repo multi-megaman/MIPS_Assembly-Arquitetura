@@ -181,11 +181,11 @@ addi $sp, $sp, -4 #Reservando espa�o na mem�ria para salvar o $ra
 	lw $ra, 0($sp)	#Recupenrando o $ra antigo
 	addi $sp, $sp, 4 #voltando a pilha pro lugar original
 	#sh $a1, 0($t0) #salva o telefone do responsavel
+	print_string(sucesso_mesa_iniciar)
 	j fim_mesa_iniciar
 	mesa_ocupada_error:
 	 print_string(falha_mesa_ocupada)
 fim_mesa_iniciar:
-print_string(sucesso_mesa_iniciar)
 jr $ra
 
 #$a0 - numero das mesa
