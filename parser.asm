@@ -141,7 +141,8 @@ parse_string: #fun��o que separa a string informada em paramentros ($a0, $a1
 				jal converter_string_para_int
 				add $a0, $v0, $0
 				#j zona_testes_parse_string
-				j mesa_iniciar
+				jal mesa_iniciar
+				j super_hiper_end
 				
 			parse_string_mesa_ad_item: #100%
 				blt $t9, 2, parse_string_invalida
@@ -151,7 +152,7 @@ parse_string: #fun��o que separa a string informada em paramentros ($a0, $a1
 				add $a3, $a1, $0 #uso da funcao string para int
 				jal converter_string_para_int
 				add $a1, $v0, $0
-				#jal mesa_ad_item
+				jal mesa_ad_item
 				j super_hiper_end
 				
 			parse_string_mesa_rm_item: #100%
@@ -162,7 +163,7 @@ parse_string: #fun��o que separa a string informada em paramentros ($a0, $a1
 				add $a3, $a1, $0 #uso da funcao string para int
 				jal converter_string_para_int
 				add $a1, $v0, $0
-				#jal mesa_rm_item
+				jal mesa_rm_item
 				j super_hiper_end
 				
 			parse_string_mesa_f:
@@ -182,7 +183,8 @@ parse_string: #fun��o que separa a string informada em paramentros ($a0, $a1
 					jal converter_string_para_int
 					add $a0, $v0, $0
 					#j zona_testes_parse_string
-					j mesa_fechar #pula para a fun��o informada
+					jal mesa_fechar #pula para a fun��o informada
+					j super_hiper_end
 				
 			parse_string_mesa_p:
 				addi $t0, $t0, 2 #adiciona dois ao endereco pois e o char mais proximo que diferencia as duas funcoes iniciadas com "p"
@@ -197,7 +199,8 @@ parse_string: #fun��o que separa a string informada em paramentros ($a0, $a1
 					jal converter_string_para_int
 					add $a0, $v0, $0
 					#j zona_testes_parse_string
-					j mesa_parcial
+					jal mesa_parcial
+					j super_hiper_end
 					
 				parse_string_mesa_pagar: #100%
 					blt $t9, 2, parse_string_invalida
@@ -209,6 +212,7 @@ parse_string: #fun��o que separa a string informada em paramentros ($a0, $a1
 					add $a1, $v0, $0
 					#j zona_testes_parse_string
 					jal mesa_pagar
+					j super_hiper_end
 				
 				
 		parse_string_arquivo:
