@@ -80,6 +80,61 @@ nome_teste: .asciiz "Ricardo Pompilio"
 	lw $a0, 0($sp)	#Recuperando o $a0 antigo
 	addi $sp, $sp, 4 #voltando a pilha pro lugar original
 .end_macro
+
+.macro macro_print_number_on_MMIO(%number)
+	addi $sp, $sp, -40
+	sw $a0, 0($sp) #Salvando o valor de $a0
+	sw $ra, 4($sp) #Salvando o valor de $ra para poder voltar a funcao
+	sw $t0, 8($sp)
+	sw $t1, 12($sp)
+	sw $t2, 16($sp)
+	sw $t3, 20($sp)
+	sw $t4, 24($sp)
+	sw $t5, 28($sp)
+	sw $t6, 32($sp)
+	sw $t7, 36($sp)
+	add $a0, %number, $0
+	jal print_number_on_MMIO
+	lw $a0, 0($sp)	#Recuperando o $a0 antigo
+	lw $ra, 4($sp) #Recuperando o $ra antigo
+	lw $t0, 8($sp)
+	lw $t1, 12($sp)
+	lw $t2, 16($sp)
+	lw $t3, 20($sp)
+	lw $t4, 24($sp)
+	lw $t5, 28($sp)
+	lw $t6, 32($sp)
+	lw $t7, 36($sp)
+	addi $sp, $sp, 40 #voltando a pilha pro lugar original
+.end_macro
+
+.macro macro_print_string_on_MMIO(%string)
+	addi $sp, $sp, -40
+	sw $a0, 0($sp) #Salvando o valor de $a0
+	sw $ra, 4($sp) #Salvando o valor de $ra para poder voltar a funcao
+	sw $t0, 8($sp)
+	sw $t1, 12($sp)
+	sw $t2, 16($sp)
+	sw $t3, 20($sp)
+	sw $t4, 24($sp)
+	sw $t5, 28($sp)
+	sw $t6, 32($sp)
+	sw $t7, 36($sp)
+	la $a0, %string
+	jal print_string_on_MMIO
+	lw $a0, 0($sp)	#Recuperando o $a0 antigo
+	lw $ra, 4($sp) #Recuperando o $ra antigo
+	lw $t0, 8($sp)
+	lw $t1, 12($sp)
+	lw $t2, 16($sp)
+	lw $t3, 20($sp)
+	lw $t4, 24($sp)
+	lw $t5, 28($sp)
+	lw $t6, 32($sp)
+	lw $t7, 36($sp)
+	addi $sp, $sp, 40 #voltando a pilha pro lugar original
+.end_macro
+
 tamanho_ate_o_registro_pedidos: .byte 76 # tamanho para o registro de pedidos
 tamanho_registro_pedidos: .byte 80 # tamanho para o registro de pedidos
 tamanho_ate_o_nome_responsavel: .byte 4 # tamanho para o registro de nome responsavel
@@ -184,8 +239,10 @@ addi $sp, $sp, -4 #Reservando espa�o na mem�ria para salvar o $ra
 	j fim_mesa_iniciar
 	mesa_ocupada_error:
 	 print_string(falha_mesa_ocupada)
+	 macro_print_string_on_MMIO(falha_mesa_ocupada)
 fim_mesa_iniciar:
 print_string(sucesso_mesa_iniciar)
+macro_print_string_on_MMIO(sucesso_mesa_iniciar)
 jr $ra
 
 #$a0 - numero das mesa
@@ -256,6 +313,8 @@ mesa_ad_item:
 	 
 	 mesa_desocupada_error:
 	 print_string(falha_mesa_desocupada)
+	 macro_print_string_on_MMIO(falha_mesa_desocupada)
+	 
 	 jr $ra	
 	    fim_mesa_ad_item:
 	    jr $ra   
@@ -357,6 +416,7 @@ addi $sp, $sp, -4 #Reservando espa�o na mem�ria para salvar o $ra
 	sub $t1, $t2, $t1 # remove o valor do produto ao preco existente
 	sh $t1, 0($t8) #substitui valor total (ler valor do produto no t9)
 	print_string(sucesso_pagamento_mesa)
+	macro_print_string_on_MMIO(sucesso_pagamento_mesa)
 j fim_mesa_pagar
 fim_mesa_pagar:
 jr $ra
@@ -387,6 +447,7 @@ mesa_fechar:
 	lhu $t9, ($t8) #obtem valor total ja existente
 	ble $t9, $0, sucesso_mesa_pagar
 	print_string(falha_mesa_fechar)
+	macro_print_string_on_MMIO(falha_mesa_fechar)
 	print_int($t9) #FORMATAR PARA TER O PADRAO DE XXXXX,XX
 	j fim_mesa_fechar
 	sucesso_mesa_pagar:
@@ -411,6 +472,7 @@ mesa_fechar:
             sub $t7, $t7, 1
             bgtu $t7, $0, clear_fechar #LIMPANDO UM POUCO DEMAIS!!!
 	print_string(sucesso_mesa_fechar)
+	macro_print_string_on_MMIO(sucesso_mesa_fechar)
 
 j fim_mesa_fechar
 fim_mesa_fechar:
@@ -429,8 +491,11 @@ mesa_parcial:
 	beq $v0, 1, fim_mesa_rm_item
 	#inicio
 	print_string(mesa_parcial_string)
+	macro_print_string_on_MMIO(mesa_parcial_string)
 	print_int($a0)
+	macro_print_number_on_MMIO($a0)
 	print_string(line_breaker)
+	macro_print_string_on_MMIO(line_breaker)
 	
 	la $t0, mesas #$t0 comeca no inicio do gerenciador de mesas e vai percorrendo de mesa em mesa
 	lbu $t4, tamanho_mesa # obtem o tamanho de uma mesa
@@ -450,12 +515,18 @@ mesa_parcial:
 	lhu $t7, ($t0) #le se existe um codigo de produto
 	beq $t7, $0, imprimir_valores #se valor for zero, nao tem pedido
 	print_string(codigo_produto)
+	macro_print_string_on_MMIO(codigo_produto)
 	print_int($t7) #imprimir codigo do produto ($t7)
+	macro_print_number_on_MMIO($t7)
 	print_string(line_breaker)
+	macro_print_string_on_MMIO(line_breaker)
 	lhu $t7, 2($t0) #obtem a quantidade atual de produtos existentes
 	print_string(quantidade_produto)
+	macro_print_string_on_MMIO(quantidade_produto)
 	print_int($t7) #imprimir quantidade ($t7)
+	macro_print_number_on_MMIO($t7)
 	print_string(line_breaker)
+	macro_print_string_on_MMIO(line_breaker)
 	
 	bge $t0, $t8, imprimir_valores #verificar se ja se passou 20 vagas
 	addi $t0, $t0, 4 #vai para a proxima casa de registro
@@ -469,8 +540,11 @@ mesa_parcial:
 	#imprime valor a pagar e valor pago
 	lhu $t9, ($t8) #obtem valor total ja existente
 	print_string(valor_a_ser_pago)
+	macro_print_string_on_MMIO(valor_a_ser_pago)
 	print_int($t9) #imprimir valor a pagar ($t9)
+	macro_print_number_on_MMIO($t9)
 	print_string(line_breaker)
+	macro_print_string_on_MMIO(line_breaker)
 	j fim_mesa_parcial
 	fim_mesa_parcial:
 	jr $ra
@@ -508,6 +582,7 @@ checar_ocupacao_mesa: #Params ($a0 -> id da mesa que serah checada | int)
 	j fim_checar_ocupacao_mesa
 	falha_mesa_codigo_alcance:
 		print_string(falha_codigo_mesa_invalido)
+		macro_print_string_on_MMIO(falha_codigo_mesa_invalido)
 		addi $v0, $0, 1 #1 = out of range
 		addi $v1, $0, -1 #-1 = inexistente
  
@@ -527,6 +602,7 @@ checar_codigo_cardapio_valido: #Params ($a1 > id do codigo do produto que sera c
 	j falha_cardapio_codigo_alcance  # Pula para o final da funcao
 	falha_cardapio_codigo_alcance:
 		print_string(falha_codigo_cardapio_invalido)
+		macro_print_string_on_MMIO(falha_codigo_cardapio_invalido)
 		addi $v0, $0, 1 #1 = out of range
 		j fim_checar_codigo_cardapio_valido
 	dentro_do_limite_cardapio:
