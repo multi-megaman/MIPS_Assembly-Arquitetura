@@ -16,7 +16,7 @@
 #Calculo do espa�o do gerenciamento das 15 mesas
 	# 2 (codigo) + 2 (status) + 61 (responsavel) + 11 (telefone) + 80 (registro de pedidos) + 4 (valor total) = 160 bytes para cada mesa
 	# Total: 160 * 15 = 2.400 bytes
-mesas_white_space: .space 32
+mesas_white_space: .space 38
 #string_de_teste:.asciiz"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
 mesas: .space 2400 #Alocando o espaco do gerenciados das XX mesas
 mesas_white_space_2: .space 4
@@ -45,13 +45,17 @@ falha_mesa_fechar: .asciiz "Falha: saldo devedor ainda n�o quitado. Valor rest
 #sucessos==
 sucesso_pagamento_mesa: .asciiz "Pagamento realizado com sucesso\n"
 sucesso_mesa_fechar: .asciiz "Mesa fechada com sucesso\n"
-#info
+sucesso_mesa_iniciar: .asciiz "Mesa iniciada com sucesso\n"
+#info==
 line_breaker: .asciiz"\n"
 mesa_parcial_string: .asciiz "Relatorio da mesa de numero "
 codigo_produto: .asciiz "Codigo produto: "
 quantidade_produto: .asciiz "Quantidade produto: "
 valor_a_ser_pago: .asciiz "Valor a ser pago: "
 valor_pago: .asciiz "Valor ja pago: "
+#testes==
+telefone_teste: .asciiz "081992248823"
+nome_teste: .asciiz "Ricardo Pompilio"
 #macros
 .macro print_string(%string)
 	addi $sp, $sp, -4
@@ -84,9 +88,17 @@ tamanho_ate_o_telefone_responsavel: .byte 65 # tamanho para o registro de telefo
 
 .globl  mesa_iniciar, mesa_format, mesa_ad_item, mesa_rm_item, mesa_pagar, mesa_fechar, mesa_parcial, mesas
 
+#jal mesa_format
+
+#$a0 - codigo da mesa
+#$a1 - telefone responsavel
+#$a2 - nome responsavel
+#li $a0 3
+#la $a1 telefone_teste
+#la $a2 nome_teste
+#jal mesa_iniciar
+
 j fim_mesas
-
-
 
 jr $ra #Return ($v0 -> 0 para sucesso, 1 para falha | bool)
 
@@ -173,6 +185,7 @@ addi $sp, $sp, -4 #Reservando espa�o na mem�ria para salvar o $ra
 	mesa_ocupada_error:
 	 print_string(falha_mesa_ocupada)
 fim_mesa_iniciar:
+print_string(sucesso_mesa_iniciar)
 jr $ra
 
 #$a0 - numero das mesa
