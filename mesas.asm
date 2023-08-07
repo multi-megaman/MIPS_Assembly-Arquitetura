@@ -317,7 +317,7 @@ lhu $t0, limite_mesas
 	    addi $sp, $sp, 4 #voltando a pilha pro lugar original
 	    add $t1, $0, $v0 #salvando valor do produto em #t9
 	    lhu $t2, ($t8) #obtem valor total ja existente
-	    sub $t1, $t1, $t2 # remove o valor do produto ao preco existente
+	    sub $t1, $t2, $t1 # remove o valor do produto ao preco existente
 	    sh $t1, 0($t8) #substitui valor total (ler valor do produto no t9)
 	    beq $t9, $0, item_zerado
 	    jr $ra
