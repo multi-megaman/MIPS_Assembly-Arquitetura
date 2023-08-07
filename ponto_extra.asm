@@ -1,6 +1,6 @@
 .data
-MMIO_INPUT:  .word   0xffff000c  # Endereço de entrada MMIO
-MMIO_OUTPUT: .word 0xffff0004  # Endereço de saida MMIO
+MMIO_INPUT:  .word   0xffff000c  # Endereï¿½o de entrada MMIO
+MMIO_OUTPUT: .word 0xffff0004  # Endereï¿½o de saida MMIO
 BACKSPACE_KEY: .word 0x00000008         # Valor do caractere "backspace" (ascii 8)
 NEW_LINE_KEY: .word 0x0A #Valor do caracter "\n" (ascii)
 USER_COMMAND: .space 124 #Serah aqui que os comandos que o usuario digitar serao guardados byte a byte.
@@ -8,6 +8,8 @@ tamanho_user_command: .word 124 #Tamanho
 teste_line_breaker: .asciiz"\n"
 buffer_number_to_string: .space 15
 tamanho_buffer_number_to_string: .byte 15
+banner: .asciiz"Ru_Rural-shell>>"
+white_space_mmio: .space 13
 #Macros
 .macro print_string_by_address(%string_register)
 	addi $sp, $sp, -4
@@ -49,6 +51,8 @@ tamanho_buffer_number_to_string: .byte 15
 .text
 
 .globl print_string_on_MMIO, print_number_on_MMIO
+macro_print_string_on_MMIO(banner) #"Printando o banner"
+jal mesa_format
 #j fim_mmio
 	lui	$s0,0xffff	#ffff0000
 	la $s2, USER_COMMAND #$s2 vai ser responsavel por escrever byte a byte em USER_COMMAND
@@ -72,7 +76,7 @@ wait:
 	#=====Armazenar o novo byte em USER_COMMAND
 	sb $v0, 0($s2) #Salvando o byte em $s2
 	addi $s2, $s2, 1 #partindo para o proximo byte
-	beq $s2, $s4, usuario_chegou_ao_limite_da_string #Se $s2 chegou no final do USER_COMMAND - 2 então
+	beq $s2, $s4, usuario_chegou_ao_limite_da_string #Se $s2 chegou no final do USER_COMMAND - 2 entï¿½o
 	 
 	#Salvando no display
 	sw	$v0,12($s0)	#data
@@ -99,6 +103,7 @@ backspace:
   	#Fazendo o print na tela do comando atualizado (sem o ultimo caracter)
   	la $a0, USER_COMMAND
   	macro_print_string_on_MMIO(teste_line_breaker) #"\n"
+  	macro_print_string_on_MMIO(banner) #"Printando o banner"
   	macro_print_string_on_MMIO(USER_COMMAND) #Printando o codigo do usuario novamente la no display do MMIO, mas dessa vez sem o ultimo caracter
   	j waitloop        # Continua lendo caracteres
 
@@ -120,11 +125,12 @@ new_line:
 		j loop_zerar_user_command
 		fim_loop_zerar_user_command:
 			la $s2, USER_COMMAND  #$s2 vai ser responsavel por escrever byte a byte em USER_COMMAND
+			macro_print_string_on_MMIO(banner) #"Printando o banner"
 	j waitloop        # Continua lendo caracteres
 	
-print_string_on_mmio_display: #Params ($a0 -> endereco de memoria onde a string estah, essa funcao vai imprimir a string ate achar um \0 | address int)
+#print_string_on_mmio_display: #Params ($a0 -> endereco de memoria onde a string estah, essa funcao vai imprimir a string ate achar um \0 | address int)
 
-jr $ra #Return (None)
+#jr $ra #Return (None)
 
 #===== Funcao que imprime no display do MMIO uma determinada string dado seu endereco=====
 print_string_on_MMIO: #Params ($a0 -> endereco da memoria da string | address int)

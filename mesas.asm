@@ -17,8 +17,8 @@
 	# 2 (codigo) + 2 (status) + 61 (responsavel) + 11 (telefone) + 80 (registro de pedidos) + 4 (valor total) = 160 bytes para cada mesa
 	# Total: 160 * 15 = 2.400 bytes
 mesas_white_space: .space 6
-string_de_teste:.asciiz"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
-mesas: .space 2400 #Alocando o espaï¿½o do gerenciados das XX mesas
+string_de_teste:.asciiz"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+mesas: .space 2400 #Alocando o espaco do gerenciados das XX mesas
 mesas_white_space_2: .space 4
 
 limite_cardapio: .half 20 
@@ -41,7 +41,7 @@ falha_codigo_mesa_invalido: .asciiz "Falha: mesa inexistente\n"
 falha_codigo_cardapio_invalido: .asciiz "Falha: codigo cardapio invalido\n"
 falha_mesa_desocupada: .asciiz "Falha: mesa desocupada\n"
 falha_mesa_ocupada: .asciiz "Falha: mesa ocupada\n"
-falha_mesa_fechar: .asciiz "Falha: saldo devedor ainda não quitado. Valor restante: R$ "
+falha_mesa_fechar: .asciiz "Falha: saldo devedor ainda nï¿½o quitado. Valor restante: R$ "
 #sucessos==
 sucesso_pagamento_mesa: .asciiz "Pagamento realizado com sucesso\n"
 sucesso_mesa_fechar: .asciiz "Mesa fechada com sucesso\n"
