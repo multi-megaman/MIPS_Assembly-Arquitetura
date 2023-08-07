@@ -236,13 +236,13 @@ addi $sp, $sp, -4 #Reservando espa�o na mem�ria para salvar o $ra
 	lw $ra, 0($sp)	#Recupenrando o $ra antigo
 	addi $sp, $sp, 4 #voltando a pilha pro lugar original
 	#sh $a1, 0($t0) #salva o telefone do responsavel
+	print_string(sucesso_mesa_iniciar)
+	macro_print_string_on_MMIO(sucesso_mesa_iniciar)
 	j fim_mesa_iniciar
 	mesa_ocupada_error:
 	 print_string(falha_mesa_ocupada)
 	 macro_print_string_on_MMIO(falha_mesa_ocupada)
 fim_mesa_iniciar:
-print_string(sucesso_mesa_iniciar)
-macro_print_string_on_MMIO(sucesso_mesa_iniciar)
 jr $ra
 
 #$a0 - numero das mesa
@@ -376,7 +376,7 @@ lhu $t0, limite_mesas
 	    addi $sp, $sp, 4 #voltando a pilha pro lugar original
 	    add $t1, $0, $v0 #salvando valor do produto em #t9
 	    lhu $t2, ($t8) #obtem valor total ja existente
-	    sub $t1, $t1, $t2 # remove o valor do produto ao preco existente
+	    sub $t1, $t2, $t1 # remove o valor do produto ao preco existente
 	    sh $t1, 0($t8) #substitui valor total (ler valor do produto no t9)
 	    beq $t9, $0, item_zerado
 	    jr $ra
