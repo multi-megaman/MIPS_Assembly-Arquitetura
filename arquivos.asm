@@ -6,6 +6,7 @@ conteudo_arquivo: .space 1024
 
 .text
 
+j fim_arquivo
 salvar:
 	#abrir o arquivo
 	li $v0, 13 #codigo para a abertura do arquivo
@@ -18,22 +19,22 @@ salvar:
 	#escrevendo no arquivo
 	li $v0, 15 #codigo para escrever no arquivo
 	add $a0, $t9, $0 #colocando o descritor do arquivo em $a0
-	la $a1, input_string_usuario #carregando o endereço da string que será salva
-	li $a2, 1200 #limite de caracteres que serão salvos (um numero maior do que deveria pode armazenar coisas indesejadas
+	#la $a1, input_string_usuario #carregando o endereï¿½o da string que serï¿½ salva
+	li $a2, 1200 #limite de caracteres que serï¿½o salvos (um numero maior do que deveria pode armazenar coisas indesejadas
 	syscall
 	
 	#fechar o arquivo
 	li $v0, 16 #codigo para fechar o arquivo
 	add $a0, $t9, $0 #colocando o descritor do arquivo em $a0
 	syscall
-	#jr $ra #voltando para a função que chamou
+	#jr $ra #voltando para a funï¿½ï¿½o que chamou
 
 
 
 recarregar:
 	#abrir o arquivo no modo leitura
 	li $v0, 13 #solicita a abertura
-	la $a0, local_arquivo #endereço do arquivo em $a0
+	la $a0, local_arquivo #endereï¿½o do arquivo em $a0
 	li $a1, 0 #0: leitura; 1: escrita;
 	syscall
 
@@ -49,7 +50,7 @@ recarregar:
 	li $v0, 16 #codigo para fechar o arquivo
 	add $a0, $t9, $0 #colocando o descritor do arquivo em $a0
 	syscall
-	#jr $ra #voltando para o lugar que essa função foi chamada
+	#jr $ra #voltando para o lugar que essa funï¿½ï¿½o foi chamada
 	
 	
 	
@@ -65,17 +66,17 @@ formatar:
 	#escrevendo no arquivo
 	li $v0, 15 #codigo para escrever no arquivo
 	add $a0, $t9, $0 #colocando o descritor do arquivo em $a0
-	la $a1, input_string_usuario #carregando o endereço da string que será salva
-	li $a2, 0 #limite de caracteres que serão salvos (um numero maior do que deveria pode armazenar coisas indesejadas
+	#la $a1, input_string_usuario #carregando o endereï¿½o da string que serï¿½ salva
+	li $a2, 0 #limite de caracteres que serï¿½o salvos (um numero maior do que deveria pode armazenar coisas indesejadas
 	syscall
 	
 	#fechar o arquivo
 	li $v0, 16 #codigo para fechar o arquivo
 	add $a0, $t9, $0 #colocando o descritor do arquivo em $a0
 	syscall
-	#jr $ra #voltando para a função que chamou
+	#jr $ra #voltando para a funï¿½ï¿½o que chamou
 
 
-end:
-li $v0, 10
-syscall
+fim_arquivo:
+#li $v0, 10
+#syscall

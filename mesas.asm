@@ -16,7 +16,7 @@
 #Calculo do espa�o do gerenciamento das 15 mesas
 	# 2 (codigo) + 2 (status) + 61 (responsavel) + 11 (telefone) + 80 (registro de pedidos) + 4 (valor total) = 160 bytes para cada mesa
 	# Total: 160 * 15 = 2.400 bytes
-mesas_white_space: .space 38
+mesas_white_space: .space 32
 #string_de_teste:.asciiz"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
 mesas: .space 2400 #Alocando o espaco do gerenciados das XX mesas
 mesas_white_space_2: .space 4
