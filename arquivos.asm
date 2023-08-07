@@ -1,11 +1,11 @@
 .data
 local_arquivo: .asciiz "D:/GitHub/MIPS_Assembly-Arquitetura/arquivo.txt"
-local_testes: .space 40
+local_testes: .space 1
 
 
 .text
 
-j recarregar
+j end
 salvar:
 	#abrir o arquivo
 	li $v0, 13 #codigo para a abertura do arquivo
@@ -18,15 +18,15 @@ salvar:
 	#escrevendo no arquivo
 	li $v0, 15 #codigo para escrever no arquivo
 	add $a0, $t9, $0 #colocando o descritor do arquivo em $a0
-	la $a1, ponteiro_cardapio #carregando o endere�o da string que ser� salva
-	li $a2, 3720 #limite de caracteres que ser�o salvos (um numero maior do que deveria pode armazenar coisas indesejadas
+	la $a1, inicio_arquivo_byte1 #carregando o endereco da string que sera salva
+	li $a2, 3722 #limite de caracteres que serao salvos (um numero maior do que deveria pode armazenar coisas indesejadas
 	syscall
 	
 	#fechar o arquivo
 	li $v0, 16 #codigo para fechar o arquivo
 	add $a0, $t9, $0 #colocando o descritor do arquivo em $a0
 	syscall
-	#jr $ra #voltando para a fun��o que chamou
+	jr $ra #voltando para a fun��o que chamou
 
 
 
@@ -51,8 +51,8 @@ recarregar:
 	
 	add $a0, $t9, $0
 	li $v0, 14 #ler conteudo do arquivo referenciado por $a0
-	la $a1, local_testes #buffer que armazena o conteudo
-	li $a2, 100 #tamanho do buffer
+	la $a1, inicio_arquivo_byte1 #buffer que armazena o conteudo
+	li $a2, 3722 #tamanho do buffer
 	syscall
 	
 	arquivo_voltar_main:
@@ -60,8 +60,7 @@ recarregar:
 	li $v0, 16 #codigo para fechar o arquivo
 	add $a0, $t9, $0 #colocando o descritor do arquivo em $a0
 	syscall
-	#jr $ra #voltando para o lugar que essa fun��o foi chamada
-	j end
+	jr $ra #voltando para o lugar que essa funcao foi chamada
 	
 	
 formatar:
@@ -76,17 +75,15 @@ formatar:
 	#escrevendo no arquivo
 	li $v0, 15 #codigo para escrever no arquivo
 	add $a0, $t9, $0 #colocando o descritor do arquivo em $a0
-	#la $a1, input_string_usuario #carregando o endere�o da string que ser� salva
-	li $a2, 0 #limite de caracteres que ser�o salvos (um numero maior do que deveria pode armazenar coisas indesejadas
+	la $a1, inicio_arquivo_byte0 #carregando o endereco da string que sera salva
+	li $a2, 1 #limite de caracteres que serao salvos (um numero maior do que deveria pode armazenar coisas indesejadas
 	syscall
 	
 	#fechar o arquivo
 	li $v0, 16 #codigo para fechar o arquivo
 	add $a0, $t9, $0 #colocando o descritor do arquivo em $a0
 	syscall
-	#jr $ra #voltando para a fun��o que chamou
+	jr $ra #voltando para a funcao que chamou
 
 
 end:
-li $v0, 10
-syscall
