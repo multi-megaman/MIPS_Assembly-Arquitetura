@@ -1,4 +1,12 @@
 .data
+
+#Grupo: Ru-Rural
+#integrantes: 
+#Pedro Henrique
+#Everton da Silva
+#Ricardo Pompilio
+
+
 local_arquivo: .asciiz "D:/GitHub/MIPS_Assembly-Arquitetura/arquivo.txt"
 local_testes: .space 1
 

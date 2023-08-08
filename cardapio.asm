@@ -1,4 +1,12 @@
 .data
+
+#Grupo: Ru-Rural
+#integrantes: 
+#Pedro Henrique
+#Everton da Silva
+#Ricardo Pompilio
+
+
 #===== Bits reservados para cada item do card�pio =====
 	#codigo do card�pio -> 1-20          = 5   bits(2^5 = 32 valores)        arredondando para words = 16bits    unsigned
 	#preco (centavos)    -> 0-99999  =  14 bits(2^17 = 16384 valores) arredondando para bytes = 32bits  unsigned
