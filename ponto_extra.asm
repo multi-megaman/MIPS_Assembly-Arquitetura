@@ -9,7 +9,7 @@ teste_line_breaker: .asciiz"\n"
 buffer_number_to_string: .space 15
 tamanho_buffer_number_to_string: .byte 15
 banner: .asciiz"Ru_Rural-shell>>"
-white_space_mmio: .space 13
+white_space_mmio: .space 10
 #Macros
 .macro print_string_by_address(%string_register)
 	addi $sp, $sp, -4

@@ -30,9 +30,10 @@ string_codigo_do_item: .asciiz"Codigo do item: "
 string_valor_do_item: .asciiz"Valor do item: "
 string_descricao_do_item: .asciiz"Descricao do item: "
 
+cardapio_rs: .ascii"R$ "
 .space 30
-inicio_arquivo_byte1: .byte 1
-inicio_arquivo_byte0: .byte 0
+inicio_arquivo_byte1: .byte '1'
+inicio_arquivo_byte0: .byte '0'
 ponteiro_cardapio: .half 0 		                   #int -> Sempre vai estar apontando para a proxima posi��o livre do cardapio. Quando chega em limite_cardapio, indica que a proxima posi��o livre est� fora do espa�o reservado.
 #Espacos totais para os 20 itens do card�pio 64x20 = 1.280
 cardapio: .space 1280					    #bytes -> quantidade em bytes reservados para todos os possiveis 20 itens do card�pio
