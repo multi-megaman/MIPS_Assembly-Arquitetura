@@ -48,7 +48,7 @@ falha_codigo_mesa_invalido: .asciiz "Falha: mesa inexistente\n"
 falha_codigo_cardapio_invalido: .asciiz "Falha: codigo cardapio invalido\n"
 falha_mesa_desocupada: .asciiz "Falha: mesa desocupada\n"
 falha_mesa_ocupada: .asciiz "Falha: mesa ocupada\n"
-falha_mesa_fechar: .asciiz "Falha: saldo devedor ainda n�o quitado. Valor restante: R$ "
+falha_mesa_fechar: .asciiz "Falha: saldo devedor ainda nao quitado.\n"
 #sucessos==
 sucesso_pagamento_mesa: .asciiz "Pagamento realizado com sucesso\n"
 sucesso_mesa_fechar: .asciiz "Mesa fechada com sucesso\n"
