@@ -174,7 +174,7 @@ parse_string: #fun��o que separa a string informada em paramentros ($a0, $a1
 				j parse_string_invalida
 				
 				parse_string_mesa_format: #100% 
-					#jal mesa_format #pula para a fun��o informada
+					jal mesa_format #pula para a fun��o informada
 					j super_hiper_end
 					
 				parse_string_mesa_fechar: #100%
@@ -223,14 +223,14 @@ parse_string: #fun��o que separa a string informada em paramentros ($a0, $a1
 			
 			
 			parse_string_arquivo_salvar: #100%
-				j super_hiper_end2
-				#j salvar
+				jal salvar
+				j super_hiper_end
 			parse_string_arquivo_recarregar: #100%
-				j super_hiper_end2
-				#j recarregar
+				jal recarregar
+				j super_hiper_end
 			parse_string_arquivo_formatar: #100%
-				j super_hiper_end2
-				#j formatar
+				jal formatar
+				j super_hiper_end
 				
 
 	parse_string_invalida: #parte do codigo que vai servir para quando a string digitada n�o atender aos padr�es
