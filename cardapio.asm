@@ -1,7 +1,7 @@
 .data
 #===== Bits reservados para cada item do card�pio =====
 	#codigo do card�pio -> 1-20          = 5   bits(2^5 = 32 valores)        arredondando para words = 16bits    unsigned
-	#preco (centavos)    -> 0-99999  =  14 bits(2^14 = 16384 valores) arredondando para bytes = 16bits  unsigned
+	#preco (centavos)    -> 0-99999  =  14 bits(2^17 = 16384 valores) arredondando para bytes = 32bits  unsigned
 	#descricao (letras) -> 0-60         =  60*8 = 480 bits 			   arredondando para bytes = 480bits unsigned
 #Bits totais para um item do card�pio = 16 + 16 + 480 = 512 bits -> 64 bytes
 
@@ -9,8 +9,8 @@
 tamanho_total_cardapio: .word 1280		  # int -> tamanho total do card�pio em bytes | atualmente o fim do cardapio fica no address 1376 (s� para refer�ncia)
 limite_cardapio: .half 20   		                   #int -> indica qual o limite de itens do card�pio
 tamanho_codigo_item_cardapio: .byte 2          #int -> indica o tamanho em bytes reservados para o c�digo do card�pio
-tamanho_preco_item_cardapio: .byte 2 	  #int -> indica o tamanho em bytes reservados para o c�digo do card�pio
-tamanho_descricao_item_cardapio: .byte 60 #int -> indica o tamanho em bytes reservados para a descri��o do item do card�pio (NAO UTILIZADO :D)
+tamanho_preco_item_cardapio: .byte 4 	  #int -> indica o tamanho em bytes reservados para o c�digo do card�pio
+tamanho_descricao_item_cardapio: .byte 58 #int -> indica o tamanho em bytes reservados para a descri��o do item do card�pio (NAO UTILIZADO :D)
 tamanho_total_item_cardapio: .byte 64        #int -> indica o tamanho em bytes reservados para um item do card�pio
 
 #textos reservados
@@ -30,9 +30,9 @@ string_codigo_do_item: .asciiz"Codigo do item: "
 string_valor_do_item: .asciiz"Valor do item: "
 string_descricao_do_item: .asciiz"Descricao do item: "
 
-cardapio_rs: .ascii"R$ "
-cardapio_virgula: .ascii ","
-.space 27
+cardapio_rs: .ascii"R$\0"
+cardapio_virgula: .ascii ",\0"
+.space 26
 inicio_arquivo_byte01: .byte '0'
 inicio_arquivo_byte1: .byte '1'
 inicio_arquivo_byte0: .byte '0'
@@ -66,36 +66,84 @@ cardapio: .space 1280					    #bytes -> quantidade em bytes reservados para todo
 .end_macro
 
 .macro macro_print_number_on_MMIO(%number)
-	addi $sp, $sp, -8
+	addi $sp, $sp, -40
 	sw $a0, 0($sp) #Salvando o valor de $a0
 	sw $ra, 4($sp) #Salvando o valor de $ra para poder voltar a funcao
+	sw $t0, 8($sp)
+	sw $t1, 12($sp)
+	sw $t2, 16($sp)
+	sw $t3, 20($sp)
+	sw $t4, 24($sp)
+	sw $t5, 28($sp)
+	sw $t6, 32($sp)
+	sw $t7, 36($sp)
 	add $a0, %number, $0
 	jal print_number_on_MMIO
 	lw $a0, 0($sp)	#Recuperando o $a0 antigo
-	lw $ra, 4($sp) #Recuperando o $a0 antigo
-	addi $sp, $sp, 8 #voltando a pilha pro lugar original
+	lw $ra, 4($sp) #Recuperando o $ra antigo
+	lw $t0, 8($sp)
+	lw $t1, 12($sp)
+	lw $t2, 16($sp)
+	lw $t3, 20($sp)
+	lw $t4, 24($sp)
+	lw $t5, 28($sp)
+	lw $t6, 32($sp)
+	lw $t7, 36($sp)
+	addi $sp, $sp, 40 #voltando a pilha pro lugar original
 .end_macro
 
 .macro macro_print_string_on_MMIO(%string)
-	addi $sp, $sp, -8
+	addi $sp, $sp, -40
 	sw $a0, 0($sp) #Salvando o valor de $a0
 	sw $ra, 4($sp) #Salvando o valor de $ra para poder voltar a funcao
+	sw $t0, 8($sp)
+	sw $t1, 12($sp)
+	sw $t2, 16($sp)
+	sw $t3, 20($sp)
+	sw $t4, 24($sp)
+	sw $t5, 28($sp)
+	sw $t6, 32($sp)
+	sw $t7, 36($sp)
 	la $a0, %string
 	jal print_string_on_MMIO
 	lw $a0, 0($sp)	#Recuperando o $a0 antigo
-	lw $ra, 4($sp) #Recuperando o $a0 antigo
-	addi $sp, $sp, 8 #voltando a pilha pro lugar original
+	lw $ra, 4($sp) #Recuperando o $ra antigo
+	lw $t0, 8($sp)
+	lw $t1, 12($sp)
+	lw $t2, 16($sp)
+	lw $t3, 20($sp)
+	lw $t4, 24($sp)
+	lw $t5, 28($sp)
+	lw $t6, 32($sp)
+	lw $t7, 36($sp)
+	addi $sp, $sp, 40 #voltando a pilha pro lugar original
 .end_macro
 
 .macro macro_print_string_on_MMIO_from_memory(%memory)
-	addi $sp, $sp, -8
+	addi $sp, $sp, -40
 	sw $a0, 0($sp) #Salvando o valor de $a0
 	sw $ra, 4($sp) #Salvando o valor de $ra para poder voltar a funcao
+	sw $t0, 8($sp)
+	sw $t1, 12($sp)
+	sw $t2, 16($sp)
+	sw $t3, 20($sp)
+	sw $t4, 24($sp)
+	sw $t5, 28($sp)
+	sw $t6, 32($sp)
+	sw $t7, 36($sp)
 	add $a0, %memory, $0
 	jal print_string_on_MMIO
 	lw $a0, 0($sp)	#Recuperando o $a0 antigo
-	lw $ra, 4($sp) #Recuperando o $a0 antigo
-	addi $sp, $sp, 8 #voltando a pilha pro lugar original
+	lw $ra, 4($sp) #Recuperando o $ra antigo
+	lw $t0, 8($sp)
+	lw $t1, 12($sp)
+	lw $t2, 16($sp)
+	lw $t3, 20($sp)
+	lw $t4, 24($sp)
+	lw $t5, 28($sp)
+	lw $t6, 32($sp)
+	lw $t7, 36($sp)
+	addi $sp, $sp, 40 #voltando a pilha pro lugar original
 .end_macro
 .text
 .globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio, strcpy, inicio_arquivo_byte1, inicio_arquivo_byte0, inicio_arquivo_byte01
@@ -148,7 +196,7 @@ cardapio_ad: #Params ($a0 -> codigo do item  | int          2 bytes,
 	
 	lb $t5, tamanho_codigo_item_cardapio #Carrega o valor reservado de bytes para o c�digo do card�pio em $t5
 	add $t3, $t3, $t5  #soma o valor atual do offset com o valor reservado de bytes para o c�digo do card�pio, fazendo com que $t3 fique apontando para o espa�o vazio reservado ao pre�o do item
-	sh $a1, 0($t3)		#Salva o half referente ao pre�o do item do card�pio na posi��o depois do c�digo do pedido
+	sw $a1, 0($t3)		#Salva o half referente ao pre�o do item do card�pio na posi��o depois do c�digo do pedido
 	
 	lb $t5, tamanho_preco_item_cardapio #Carrega o valor reservado de bytes para o pre�o do card�pio em $t5
 	add $t3, $t3, $t5  #soma o valor atual do offset com o valor reservado de bytes para o pre�o do card�pio, fazendo com que $t3 fique apontando para o espa�o vazio reservado a descri��o do item
@@ -306,19 +354,24 @@ cardapio_list: #Params (None)
 		 macro_print_string_on_MMIO(line_breaker)
 		 add $t3, $a1, $0 #Recuperando $t3 original
 		 add $t4, $a2, $0 #Recuperando de $4 original
-		 #Printando o pre�o do item
+		 #Printando o preco do item
 		 lbu $t3, tamanho_codigo_item_cardapio #Carregando o tamanho do c�digo do item
 		 add $t4, $t3, $t4 #Somando o local da mem�ria com o tamanho do c�digo, fazendo com que $t4 esteja agora no pre�o do item
-		 lhu $t3, 0($t4) #Carregando o valor do pre�o do item
+		 lw $t3, 0($t4) #Carregando o valor do pre�o do item
 		add $a1, $t3, $0 #Salvando $t3 original em $a1
 		add $a2, $t4, $0 #Salvando $t4 original em $a2
 		 print_string(string_valor_do_item)
 		 macro_print_string_on_MMIO(string_valor_do_item)
 		 #Reais e centavos ----
-		 #addi $t7, $0, 10 #dividir na base 10
-		 #div $a1, $t7
+		 addi $t7, $0, 100 #dividir na base 100
+		 div $a1, $t7
+		 mflo $t7
+		 mfhi $t6
 		 print_int($a1)
-		 macro_print_number_on_MMIO($a1)
+		macro_print_string_on_MMIO(cardapio_rs)
+		 macro_print_number_on_MMIO($t7)
+		 macro_print_string_on_MMIO(cardapio_virgula)
+		 macro_print_number_on_MMIO($t6)
 		 print_string(line_breaker)
 		 macro_print_string_on_MMIO(line_breaker)
 		 add $t3, $a1, $0
