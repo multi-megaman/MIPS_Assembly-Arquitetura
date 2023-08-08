@@ -32,8 +32,7 @@ string_descricao_do_item: .asciiz"Descricao do item: "
 
 cardapio_rs: .ascii"R$ "
 cardapio_virgula: .ascii ","
-.space 27
-inicio_arquivo_byte01: .byte '0'
+.space 28
 inicio_arquivo_byte1: .byte '1'
 inicio_arquivo_byte0: .byte '0'
 ponteiro_cardapio: .half 0 		                   #int -> Sempre vai estar apontando para a proxima posi��o livre do cardapio. Quando chega em limite_cardapio, indica que a proxima posi��o livre est� fora do espa�o reservado.
@@ -98,7 +97,7 @@ cardapio: .space 1280					    #bytes -> quantidade em bytes reservados para todo
 	addi $sp, $sp, 8 #voltando a pilha pro lugar original
 .end_macro
 .text
-.globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio, strcpy, inicio_arquivo_byte1, inicio_arquivo_byte0, inicio_arquivo_byte01
+.globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio, strcpy, inicio_arquivo_byte1, inicio_arquivo_byte0
 j end_cardapio
 #=====Criar item no card�pio=====
 cardapio_ad: #Params ($a0 -> codigo do item  | int          2 bytes,
