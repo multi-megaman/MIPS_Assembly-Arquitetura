@@ -1,4 +1,11 @@
 .data
+
+#Grupo: Ru-Rural
+#integrantes: 
+#Pedro Henrique
+#Everton da Silva
+#Ricardo Pompilio
+
 #Calculando o espaco de memoria necessario para a mesa
 	#Calculo para cada mesa individual:
 	# Codigo da mesa -> 1-15	      = 4 bits (2^4 = 16 valores)             arredondando para bytes =  2 bytes      unsigned
