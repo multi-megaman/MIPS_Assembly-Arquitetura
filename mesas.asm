@@ -1,12 +1,4 @@
 .data
-
-#Grupo: Ru-Rural
-#integrantes: 
-#Pedro Henrique
-#Everton da Silva
-#Ricardo Pompilio
-
-
 #Calculando o espaco de memoria necessario para a mesa
 	#Calculo para cada mesa individual:
 	# Codigo da mesa -> 1-15	      = 4 bits (2^4 = 16 valores)             arredondando para bytes =  2 bytes      unsigned
@@ -200,8 +192,8 @@ mesa_format: #Params (None)
 
     # End of mesa_format
     end_mesa_format:
-    print_string(sucesso_mesa_format)
-    macro_print_string_on_MMIO(sucesso_mesa_format)
+    #print_string(sucesso_mesa_format)
+    #macro_print_string_on_MMIO(sucesso_mesa_format)
 jr $ra #end_mesa_format
 
 #$a0 - codigo da mesa
@@ -218,7 +210,7 @@ addi $sp, $sp, -4 #Reservando espa�o na mem�ria para salvar o $ra
 	beq $v1, 1, mesa_ocupada_error
 	beq $v0, 1, fim_mesa_iniciar
 	
-	la $t9, mesas #$t0 comeca no inicio do gerenciador de mesas e vai percorrendo de mesa em mesa
+	la $t9, mesas #$t9 comeca no inicio do gerenciador de mesas e vai percorrendo de mesa em mesa
 	lbu $t4, tamanho_mesa # obtem o tamanho de uma mesa
 	subi $t1, $a0, 1 #remove 1 do numero da mesa para obter o indice
 	multu $t1,$t4 	#Calculando o offset para se chegar no proximo espaco de memoria livre reservado para uma mesa (160 bytes).
@@ -562,20 +554,24 @@ mesa_parcial:
 	lhu $t9, ($t8) #obtem valor total ja existente
 	print_string(valor_a_ser_pago)
 	macro_print_string_on_MMIO(valor_a_ser_pago)
+	print_int($t9)
+	macro_print_number_on_MMIO($t9)
+	print_string(line_breaker)
+	macro_print_string_on_MMIO(line_breaker)
 	 #Reais e centavos ----
-		 addi $t7, $0, 100 #dividir na base 100
-		 div $t9, $t7
-		 mflo $t7
-		 mfhi $t6
-		 print_int($t9)
-		macro_print_string_on_MMIO(cardapio_rs)
-		 macro_print_number_on_MMIO($t7)
-		 macro_print_string_on_MMIO(cardapio_virgula)
-		 macro_print_number_on_MMIO($t6)
-		 print_string(line_breaker)
-		 macro_print_string_on_MMIO(line_breaker)
-		 add $t3, $a1, $0
-		 add $t4, $a2, $0
+		 #addi $t7, $0, 100 #dividir na base 100
+		 #div $t9, $t7
+		 #mflo $t7
+		 #mfhi $t6
+		 #print_int($t9)
+		#macro_print_string_on_MMIO(cardapio_rs)
+		# macro_print_number_on_MMIO($t7)
+		 #macro_print_string_on_MMIO(cardapio_virgula)
+		 #macro_print_number_on_MMIO($t6)
+		 #print_string(line_breaker)
+		 #macro_print_string_on_MMIO(line_breaker)
+		# add $t3, $a1, $0
+		# add $t4, $a2, $0
 	#print_int($t9) #imprimir valor a pagar ($t9)
 	#macro_print_number_on_MMIO($t9)
 	#print_string(line_breaker)
