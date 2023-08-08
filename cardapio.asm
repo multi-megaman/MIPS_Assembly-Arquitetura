@@ -486,7 +486,7 @@ retornar_infos_item_cardapio: #Params ($a0 -> id do item que o usu�rio gostari
 	add $t2, $t4, $t1 #t2 est� apontando exatamente para o local inicial onde o item desejado est� 
 	lbu $t3, tamanho_codigo_item_cardapio #Carregando o tamanho do c�digo do item
 	add $t1, $t2, $t3 # $t1 est� apontando para o espa�o de mem�ria do pre�o do item
-	lhu $v0, 0($t1) #Carregamos $v0 com o valor que est� em $t1 (o pre�o do item)
+	lw $v0, 0($t1) #Carregamos $v0 com o valor que est� em $t1 (o pre�o do item)
 	lbu $t3, tamanho_preco_item_cardapio #Carregando o tamanho do pre�o do item
 	add $v1, $t1, $t3 #Indo para o primeiro byte da descri��o do item
 	j fim_retornar_infos_item_cardapio

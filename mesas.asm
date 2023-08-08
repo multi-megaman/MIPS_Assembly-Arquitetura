@@ -319,9 +319,9 @@ mesa_ad_item:
 	    lw $ra, 0($sp)	#Recupenrando o $ra antigo
 	    addi $sp, $sp, 4 #voltando a pilha pro lugar original
 	    add $t9, $0, $v0 #salvando valor do produto em #t9
-	    lhu $t2, ($t8) #obtem valor total ja existente
+	    lw $t2, ($t8) #obtem valor total ja existente
 	    add $t9, $t9, $t2 # adiciona valor do produto ao preco existente
-	    sh $t9, 0($t8) #Adiciona valor total (ler valor do produto no t9)
+	    sw $t9, 0($t8) #Adiciona valor total (ler valor do produto no t9)
 	    print_string(sucesso_mesa_ad_item)
 	    macro_print_string_on_MMIO(sucesso_mesa_ad_item)
 	    jr $ra
@@ -391,9 +391,9 @@ lhu $t0, limite_mesas
 	    lw $ra, 0($sp)	#Recupenrando o $ra antigo
 	    addi $sp, $sp, 4 #voltando a pilha pro lugar original
 	    add $t1, $0, $v0 #salvando valor do produto em #t9
-	    lhu $t2, ($t8) #obtem valor total ja existente
+	    lw $t2, ($t8) #obtem valor total ja existente
 	    sub $t1, $t2, $t1 # remove o valor do produto ao preco existente
-	    sh $t1, 0($t8) #substitui valor total (ler valor do produto no t9)
+	    sw $t1, 0($t8) #substitui valor total (ler valor do produto no t9)
 	    beq $t9, $0, item_zerado
 	    j finaliza_mesa_rm_item_sucesso
 	item_zerado:
@@ -432,9 +432,9 @@ addi $sp, $sp, -4 #Reservando espa�o na mem�ria para salvar o $ra
 	add $t0, $t0, $t6 # soma o inicio com a distancia
 	add $t8, $t8, $t0 #local final do registro pedidos (e inico do valor total)
 	add $t1, $0, $a1 #salvando valor do pagamento em $t1
-	lhu $t2, ($t8) #obtem valor total ja existente
+	lw $t2, ($t8) #obtem valor total ja existente
 	sub $t1, $t2, $t1 # remove o valor do produto ao preco existente
-	sh $t1, 0($t8) #substitui valor total (ler valor do produto no t9)
+	sw $t1, 0($t8) #substitui valor total (ler valor do produto no t9)
 	print_string(sucesso_pagamento_mesa)
 	macro_print_string_on_MMIO(sucesso_pagamento_mesa)
 j fim_mesa_pagar
@@ -464,7 +464,7 @@ mesa_fechar:
 	lbu $t8, tamanho_registro_pedidos #tamanho maximo registro de pedidos
 	add $t0, $t0, $t6 # soma o inicio com a distancia
 	add $t8, $t8, $t0 #local final do registro pedidos (e inico do valor total)
-	lhu $t9, ($t8) #obtem valor total ja existente
+	lw $t9, ($t8) #obtem valor total ja existente
 	ble $t9, $0, sucesso_mesa_pagar
 	print_string(falha_mesa_fechar)
 	macro_print_string_on_MMIO(falha_mesa_fechar)
@@ -558,7 +558,7 @@ mesa_parcial:
 	
 	imprimir_valores:
 	#imprime valor a pagar e valor pago
-	lhu $t9, ($t8) #obtem valor total ja existente
+	lw $t9, ($t8) #obtem valor total ja existente
 	print_string(valor_a_ser_pago)
 	macro_print_string_on_MMIO(valor_a_ser_pago)
 	print_int($t9)
