@@ -31,7 +31,9 @@ string_valor_do_item: .asciiz"Valor do item: "
 string_descricao_do_item: .asciiz"Descricao do item: "
 
 cardapio_rs: .ascii"R$ "
-.space 30
+cardapio_virgula: .ascii ","
+.space 27
+inicio_arquivo_byte01: .byte '0'
 inicio_arquivo_byte1: .byte '1'
 inicio_arquivo_byte0: .byte '0'
 ponteiro_cardapio: .half 0 		                   #int -> Sempre vai estar apontando para a proxima posi��o livre do cardapio. Quando chega em limite_cardapio, indica que a proxima posi��o livre est� fora do espa�o reservado.
@@ -96,7 +98,7 @@ cardapio: .space 1280					    #bytes -> quantidade em bytes reservados para todo
 	addi $sp, $sp, 8 #voltando a pilha pro lugar original
 .end_macro
 .text
-.globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio, strcpy, inicio_arquivo_byte1, inicio_arquivo_byte0
+.globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio, strcpy, inicio_arquivo_byte1, inicio_arquivo_byte0, inicio_arquivo_byte01
 j end_cardapio
 #=====Criar item no card�pio=====
 cardapio_ad: #Params ($a0 -> codigo do item  | int          2 bytes,
@@ -312,6 +314,9 @@ cardapio_list: #Params (None)
 		add $a2, $t4, $0 #Salvando $t4 original em $a2
 		 print_string(string_valor_do_item)
 		 macro_print_string_on_MMIO(string_valor_do_item)
+		 #Reais e centavos ----
+		 #addi $t7, $0, 10 #dividir na base 10
+		 #div $a1, $t7
 		 print_int($a1)
 		 macro_print_number_on_MMIO($a1)
 		 print_string(line_breaker)
