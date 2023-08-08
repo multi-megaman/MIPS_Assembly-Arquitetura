@@ -46,6 +46,9 @@ falha_mesa_fechar: .asciiz "Falha: saldo devedor ainda n�o quitado. Valor rest
 sucesso_pagamento_mesa: .asciiz "Pagamento realizado com sucesso\n"
 sucesso_mesa_fechar: .asciiz "Mesa fechada com sucesso\n"
 sucesso_mesa_iniciar: .asciiz "Mesa iniciada com sucesso\n"
+sucesso_mesa_ad_item: .asciiz "Item adicionado com sucesso\n"
+sucesso_mesa_rm_item: .asciiz "Item removido com sucesso\n"
+sucesso_mesa_format: .asciiz "Mesas formatadas com sucesso\n"
 #info==
 line_breaker: .asciiz"\n"
 mesa_parcial_string: .asciiz "Relatorio da mesa de numero "
@@ -53,6 +56,8 @@ codigo_produto: .asciiz "Codigo produto: "
 quantidade_produto: .asciiz "Quantidade produto: "
 valor_a_ser_pago: .asciiz "Valor a ser pago: "
 valor_pago: .asciiz "Valor ja pago: "
+cardapio_rs: .ascii"R$\0"
+cardapio_virgula: .ascii ",\0"
 #testes==
 telefone_teste: .asciiz "081992248823"
 nome_teste: .asciiz "Ricardo Pompilio"
@@ -187,6 +192,8 @@ mesa_format: #Params (None)
 
     # End of mesa_format
     end_mesa_format:
+    print_string(sucesso_mesa_format)
+    macro_print_string_on_MMIO(sucesso_mesa_format)
 jr $ra #end_mesa_format
 
 #$a0 - codigo da mesa
@@ -308,6 +315,8 @@ mesa_ad_item:
 	    lhu $t2, ($t8) #obtem valor total ja existente
 	    add $t9, $t9, $t2 # adiciona valor do produto ao preco existente
 	    sh $t9, 0($t8) #Adiciona valor total (ler valor do produto no t9)
+	    print_string(sucesso_mesa_ad_item)
+	    macro_print_string_on_MMIO(sucesso_mesa_ad_item)
 	    jr $ra
 	    j fim_mesas
 	 
@@ -379,11 +388,15 @@ lhu $t0, limite_mesas
 	    sub $t1, $t2, $t1 # remove o valor do produto ao preco existente
 	    sh $t1, 0($t8) #substitui valor total (ler valor do produto no t9)
 	    beq $t9, $0, item_zerado
-	    jr $ra
+	    j finaliza_mesa_rm_item_sucesso
 	item_zerado:
 	#remove o item da memoria
 	sh $0, 0($k0)#esvazia o item da memoria
-	jr $ra
+	
+	j finaliza_mesa_rm_item_sucesso
+	finaliza_mesa_rm_item_sucesso:
+	print_string(sucesso_mesa_rm_item)
+	macro_print_string_on_MMIO(sucesso_mesa_rm_item)
 	remove_item_nao_existe:
 	fim_mesa_rm_item:
 	jr $ra
@@ -541,10 +554,24 @@ mesa_parcial:
 	lhu $t9, ($t8) #obtem valor total ja existente
 	print_string(valor_a_ser_pago)
 	macro_print_string_on_MMIO(valor_a_ser_pago)
-	print_int($t9) #imprimir valor a pagar ($t9)
-	macro_print_number_on_MMIO($t9)
-	print_string(line_breaker)
-	macro_print_string_on_MMIO(line_breaker)
+	 #Reais e centavos ----
+		 addi $t7, $0, 100 #dividir na base 100
+		 div $t9, $t7
+		 mflo $t7
+		 mfhi $t6
+		 print_int($t9)
+		macro_print_string_on_MMIO(cardapio_rs)
+		 macro_print_number_on_MMIO($t7)
+		 macro_print_string_on_MMIO(cardapio_virgula)
+		 macro_print_number_on_MMIO($t6)
+		 print_string(line_breaker)
+		 macro_print_string_on_MMIO(line_breaker)
+		 add $t3, $a1, $0
+		 add $t4, $a2, $0
+	#print_int($t9) #imprimir valor a pagar ($t9)
+	#macro_print_number_on_MMIO($t9)
+	#print_string(line_breaker)
+	#macro_print_string_on_MMIO(line_breaker)
 	j fim_mesa_parcial
 	fim_mesa_parcial:
 	jr $ra
