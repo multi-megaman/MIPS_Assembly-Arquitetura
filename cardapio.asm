@@ -154,7 +154,7 @@ cardapio: .space 1280					    #bytes -> quantidade em bytes reservados para todo
 	addi $sp, $sp, 40 #voltando a pilha pro lugar original
 .end_macro
 .text
-.globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio, strcpy, inicio_arquivo_byte1, inicio_arquivo_byte0
+.globl cardapio_ad, cardapio_rm, cardapio_list, cardapio_format, checar_existencia_de_codigo, retornar_infos_item_cardapio, strcpy, ponteiro_cardapio
 j end_cardapio
 #=====Criar item no card�pio=====
 cardapio_ad: #Params ($a0 -> codigo do item  | int          2 bytes,
@@ -424,6 +424,8 @@ jr $ra #Return (None)
 cardapio_format: #Params (None)
 	la $t0, cardapio
 	lw $t1, tamanho_total_cardapio
+	la $t7, ponteiro_cardapio #carregando o endereço do ponteiro
+	sh $0, 0($t7) #zerando o ponteiro
 	add $t1, $t1, $t0 #Posi��o final do cardapio
 	add $t2, $0, $t0 #$t2 vai percorrer o card�pido, indo de $t0 (inicio do cardapio) at� $t1 (final do card�pio) zerando ele por completo byte a byte
 	loop_cardapio_format:
